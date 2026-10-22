@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% from '_icons.html' import icon %}
+{% from '_macros.html' import sci with context %}
+{% block title %}{{ t('compare_title') }} · {{ t('site_name') }}{% endblock %}
+{% block main %}
+{% set cols = '180px repeat(' ~ [cmp|length, 1]|max ~ ', minmax(0, 1fr))' %}
+<div class="wrap page-body" data-compare-page data-ids="{{ ids|join(',') }}">
+  <div class="title-row">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h1>{{ t('compare_title') }}</h1>
+      <p style="font-size:14px">{{ t('compare_summary', n=cmp|length) }}{% if same_genus %} · {{ t('compare_same_genus', g='') }}<i class="en">{{ same_genus }}</i>{% endif %}</p>
+    </div>
+    {% if cmp|length > 1 %}
+    <label class="label is-middle is-flex is-gap-xs" style="font-size:14px;cursor:pointer">
+      <input type="checkbox" class="input" data-diff-only>
+      <span class="checkbox"></span>
+      <span class="text">{{ t('diff_only') }}</span>
+    </label>
+    {% endif %}
+  </div>
+
+  {% if cmp %}
+  <div class="compare-frame">
+    <div class="compare-grid" data-compare-grid>
+      <div class="compare-row is-head" style="grid-template-columns:{{ cols }}">
+        <div></div>
+        {% for c in cmp %}
+        <div class="compare-head">
+          <a class="sci" href="{{ url_for('taxon', taxon_id=c.taxon_id) }}">
+            <span class="n en">{{ (c.formatted_name or c.simple_name)|italic }}</span>
+            <span class="muted" style="font-size:13px">{{ c.common_name_c or '' }}</span>
+          </a>
+          <a class="icon-btn" style="padding:4px;min-width:0" href="{{ url_for('compare', ids=(ids|reject('equalto', c.taxon_id)|join(','))) }}" data-remove-compare="{{ c.taxon_id }}" title="{{ t('remove') }}">{{ icon('x', '16px') }}</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% for grp in groups %}
+      <div class="compare-group eyebrow is-primary">{{ grp.title }}</div>
+      {% for row in grp.rows %}
+      <div class="compare-row {{ 'is-diff' if row.differs else 'is-same' }}" style="grid-template-columns:{{ cols }}">
+        <div class="label">{{ row.label }}</div>
+        {% for cell in row.cells %}<div>{{ cell }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="empty"><p style="font-size:14px">{{ t('compare_empty') }}</p></div>
+  {% endif %}
+
+  {% if suggest and cmp|length < 4 %}
+  <div class="suggest">
+    <span class="strong" style="font-size:14px;font-weight:600;margin-right:4px">{{ t('add') }}</span>
+    {% for s in suggest %}
+    <a class="button is-outline is-round is-xs" href="{{ url_for('compare', ids=(ids + [s.taxon_id])|join(',')) }}" data-add-compare-link="{{ s.taxon_id }}">{{ icon('plus', '12px') }}<i class="en">{{ s.simple_name }}</i>{% if s.common_name_c %} {{ s.common_name_c }}{% endif %}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

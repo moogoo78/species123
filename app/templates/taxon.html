@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% from '_icons.html' import icon %}
+{% from '_macros.html' import sci, badge_list with context %}
+{% block title %}{{ tx.simple_name }}{% if tx.common_name_c %} {{ tx.common_name_c }}{% endif %} · {{ t('site_name') }}{% endblock %}
+
+{# ---------- shared pieces ---------- #}
+{% macro photo(p, size='medium', cls='') -%}
+<a class="photo {{ cls }}" href="{{ p.page }}" rel="noopener" target="_blank">
+  <img src="{{ p[size] }}" alt="{{ tx.simple_name }}{% if tx.common_name_c %} {{ tx.common_name_c }}{% endif %}" loading="lazy" referrerpolicy="no-referrer">
+  <span class="credit">{{ p.attribution }}</span>
+</a>
+{%- endmacro %}
+
+{% macro photo_slot() -%}
+<div class="photo is-empty">{{ icon('image', '20px') }}</div>
+{%- endmacro %}
+
+{% macro photos_credit() -%}
+{% if pics.photos %}<p class="muted" style="font-size:12px">{{ t('photos_credit') }}{% if pics.inat_id %} · <a href="https://www.inaturalist.org/taxa/{{ pics.inat_id }}" rel="noopener" target="_blank">{{ t('more_photos') }}</a>{% endif %}</p>{% endif %}
+{%- endmacro %}
+
+{% macro fact_tiles(keys=None, exclude=None) -%}
+<div class="fact-tiles">
+  {% for f in facts if (keys is none or f.key in keys) and (exclude is none or f.key not in exclude) %}
+  <div class="fact-tile"><span class="ranklabel">{{ f.label }}</span><span class="v">{{ f.value }}</span></div>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro lineage_chips() -%}
+<div class="lineage-chips">
+  {% for a in lineage %}
+  <a class="lineage-chip hover-bg" href="{{ url_for('taxonomy', node=a.taxon_id) }}">
+    <span class="ranklabel">{{ rank_label(a.rank) }}</span>
+    <span class="n en">{{ (a.formatted_name or a.simple_name)|italic }}</span>
+    {% if a.common_name_c %}<span class="muted" style="font-size:12px">{{ a.common_name_c }}</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro vern_list() %}
+{% for n, kind in vern %}<div class="side-item is-row"><span>{{ n }}</span><small>{{ kind }}</small></div>{% endfor %}
+{% if not vern %}<p class="muted" style="font-size:14px">{{ t('none_recorded') }}</p>{% endif %}
+{% endmacro %}
+
+{% macro refs_list(style='') %}
+{% if refs is none %}<p class="muted" style="font-size:13px">{{ t('refs_unavailable') }}</p>
+{% elif not refs %}<p class="muted" style="font-size:13px">{{ t('none_recorded') }}</p>
+{% else %}{% for r in refs %}<p class="ref" style="{{ style }}">{{ r.citation|italic }}</p>{% endfor %}{% endif %}
+{% endmacro %}
+
+{% macro children_list() %}
+{% if kids %}
+<div class="block">
+  <h2>{{ t('children') }}</h2>
+  <div>
+    {% for k in kids %}
+    <a class="child-row hover-bg" href="{{ url_for('taxon', taxon_id=k.taxon_id) }}">
+      <span class="sci">{{ sci(k) }}</span>
+      <span>{{ k.common_name_c or '' }} <span class="ranklabel">{{ rank_label(k.rank) }}</span></span>
+      <span class="badges">{{ badge_list(k, compact=True) }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% if tx.n_children > kids|length %}<p class="tree-more"><a href="{{ url_for('search', under=tx.taxon_id) }}">{{ t('search_within') }}</a></p>{% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% block main %}
+{% set tabs = [('overview', 'overview'), ('taxonomy', 'classification'), ('distribution', 'distribution'), ('names', 'names'), ('refs', 'literature')] %}
+<section class="profile-head{{ ' is-guide' if layout == 'guide' }}">
+  <div class="wrap">
+    <div class="profile-top">
+      <nav class="crumbs" aria-label="breadcrumb">
+        <a href="{{ url_for('home') }}">{{ t('home') }}</a><span class="sep">/</span>
+        {% for a in crumbs %}
+        {% if not loop.last %}<a href="{{ url_for('taxonomy', node=a.taxon_id) }}" class="en">{{ (a.formatted_name or a.simple_name)|italic if a.rank in ('Genus',) else a.simple_name }}</a><span class="sep">/</span>{% else %}<span class="current en">{{ (a.formatted_name or a.simple_name)|italic }}</span>{% endif %}
+        {% endfor %}
+        {% if crumbs and crumbs[-1].taxon_id != tx.taxon_id %}<span class="sep">/</span><span class="current en">{{ (tx.formatted_name or tx.simple_name)|italic }}</span>{% endif %}
+      </nav>
+      <div class="segmented">
+        <a href="{{ url_with(layout=None) }}" class="{{ 'is-active' if layout == 'guide' }}">{{ t('layout_guide') }}</a>
+        <a href="{{ url_with(layout='sheet') }}" class="{{ 'is-active' if layout == 'sheet' }}">{{ t('layout_sheet') }}</a>
+        <a href="{{ url_with(layout='article') }}" class="{{ 'is-active' if layout == 'article' }}">{{ t('layout_article') }}</a>
+      </div>
+    </div>
+
+    {% if layout == 'guide' and pics.photos %}
+    <div class="mosaic">
+      {{ photo(pics.photos[0], 'large', 'is-hero') }}
+      {% for i in range(1, 5) %}{% if pics.photos[i] %}{{ photo(pics.photos[i]) }}{% else %}{{ photo_slot() }}{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="profile-title">
+      <div class="names">
+        <div class="badges">
+          <span class="badge is-plain is-success is-round">{{ t('accepted') }}</span>
+          <span class="badge is-outline is-round">{{ rank_label(tx.rank) }}</span>
+          {{ badge_list(tx, size='') }}
+        </div>
+        <h1>{{ sci(tx) }}</h1>
+        {% if tx.common_name_c %}<p class="zh-name">{{ tx.common_name_c }}{% if tx.family_c %} <span class="muted" style="font-size:15px">· {{ tx.family_c }} <span class="en">{{ tx.family }}</span></span>{% endif %}</p>{% endif %}
+      </div>
+      <div class="actions">
+        <button type="button" class="button is-plain is-primary is-round is-sm" data-add-compare="{{ tx.taxon_id }}" data-label-in="{{ t('in_compare') }}">{{ icon('columns', '14px') }}<span>{{ t('add_compare') }}</span></button>
+        <button type="button" class="button is-outline is-round is-sm" data-copy="{{ cite }}" data-copied="{{ t('copied') }}">{{ icon('copy', '14px') }}{{ t('cite') }}</button>
+        <a class="button is-outline is-round is-sm" href="https://taicol.tw/{{ 'zh-hant' if lang == 'zh' else 'en-us' }}/taxon/{{ tx.taxon_id }}" rel="noopener" target="_blank">{{ icon('external-link', '14px') }}{{ t('view_taicol') }}</a>
+      </div>
+    </div>
+
+    {% if layout == 'guide' %}
+    <nav class="tabs" role="tablist" data-tabs>
+      {% for id, key in tabs %}
+      <a href="#{{ id }}" role="tab" data-tab="{{ id }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ t(key) }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
+</section>
+
+{% if layout == 'guide' %}
+<div class="wrap page-body guide">
+  <div class="flow">
+    <section id="overview" class="block" data-tab-panel="overview" style="gap:20px">
+      {{ fact_tiles(exclude=dist_facts) }}
+      {{ children_list() }}
+      {{ photos_credit() }}
+    </section>
+    <section id="taxonomy" class="block" data-tab-panel="taxonomy">
+      <h2>{{ t('classification') }}</h2>
+      {{ lineage_chips() }}
+    </section>
+    <section id="distribution" class="block" data-tab-panel="distribution">
+      <h2>{{ t('habitat_status') }}</h2>
+      <table class="table is-line facts-table"><tbody>
+        {% for f in facts if f.key in dist_facts %}<tr><th>{{ f.label }}</th><td>{{ f.value }}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+    <section id="names" class="side-list" data-tab-panel="names">
+      <h2>{{ t('common_names') }}</h2>{{ vern_list() }}
+    </section>
+    <section id="refs" class="block" data-tab-panel="refs">
+      <h2>{{ t('literature') }}</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">{{ refs_list('font-size:14px;line-height:1.75;color:var(--theme-tx-2)') }}</div>
+      {% if tx.updated_at %}<span class="muted" style="font-size:12px">{{ t('revised', d=tx.updated_at) }}</span>{% endif %}
+    </section>
+  </div>
+</div>
+
+{% elif layout == 'sheet' %}
+<div class="wrap page-body sheet">
+  <aside>
+    {% if pics.photos %}{{ photo(pics.photos[0], 'medium', 'is-square') }}{% endif %}
+    <div class="panel">
+      <h2 class="eyebrow">{{ t('classification') }}</h2>
+      {% for a in lineage %}
+      <div class="lineage-row">
+        <span class="ranklabel">{{ rank_label(a.rank) }}</span>
+        {% if a.taxon_id == tx.taxon_id %}<span class="strong en">{{ (a.formatted_name or a.simple_name)|italic }}</span>
+        {% else %}<a href="{{ url_for('taxonomy', node=a.taxon_id) }}"><span class="en">{{ (a.formatted_name or a.simple_name)|italic }}</span>{% if a.common_name_c %}<span class="zh">{{ a.common_name_c }}</span>{% endif %}</a>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="panel">
+      <h2 class="eyebrow">{{ t('identifiers') }}</h2>
+      <div class="kv"><span>TaiCOL taxon</span><a class="mono" href="https://taicol.tw/zh-hant/taxon/{{ tx.taxon_id }}" rel="noopener">{{ tx.taxon_id }}</a></div>
+      {% if tx.name_id %}<div class="kv"><span>TaiCOL name</span><span class="mono">{{ tx.name_id }}</span></div>{% endif %}
+      {% if pics.inat_id %}<div class="kv"><span>iNaturalist</span><a class="mono" href="https://www.inaturalist.org/taxa/{{ pics.inat_id }}" rel="noopener">{{ pics.inat_id }}</a></div>{% endif %}
+    </div>
+  </aside>
+  <section>
+    <div class="block">
+      <h2>{{ t('key_facts') }}</h2>
+      <table class="table is-line facts-table"><tbody>
+        {% for f in facts %}<tr><th>{{ f.label }}</th><td>{{ f.value }}</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+    {{ children_list() }}
+    <div class="block">
+      <h2>{{ t('literature') }}</h2>
+      {{ refs_list('font-size:14px;color:var(--theme-tx-2)') }}
+    </div>
+  </section>
+  <aside>
+    <div class="side-list">
+      <h2 class="eyebrow">{{ t('common_names') }}</h2>
+      {{ vern_list() }}
+    </div>
+    {% if tx.updated_at %}<span class="muted" style="font-size:12px">{{ t('revised', d=tx.updated_at) }}</span>{% endif %}
+    {{ photos_credit() }}
+  </aside>
+</div>
+
+{% else %}
+<div class="wrap page-body article">
+  <nav aria-label="{{ t('on_this_page') }}">
+    <span class="eyebrow" style="padding:0 8px 6px">{{ t('on_this_page') }}</span>
+    {% for id, key in [('m-overview', 'overview'), ('m-taxonomy', 'classification'), ('m-names', 'names'), ('m-refs', 'literature')] %}
+    <a class="hover-bg" href="#{{ id }}"># {{ t(key) }}</a>
+    {% endfor %}
+  </nav>
+  <div class="flow">
+    <div id="m-overview" class="block" style="gap:20px">
+      {% if pics.photos %}{{ photo(pics.photos[0], 'large', 'is-wide') }}{% endif %}
+      {{ fact_tiles() }}
+      {{ photos_credit() }}
+    </div>
+    <div id="m-taxonomy" class="block">
+      <h2>{{ t('classification') }}</h2>
+      {{ lineage_chips() }}
+      {{ children_list() }}
+    </div>
+    <div id="m-names" class="side-list">
+      <h2>{{ t('common_names') }}</h2>{{ vern_list() }}
+    </div>
+    <div id="m-refs" class="block">
+      <h2>{{ t('literature') }}</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">{{ refs_list('font-size:14px;line-height:1.75;color:var(--theme-tx-2)') }}</div>
+      {% if tx.updated_at %}<span class="muted" style="font-size:12px">{{ t('revised', d=tx.updated_at) }}</span>{% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

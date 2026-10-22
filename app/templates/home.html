@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% from '_icons.html' import icon %}
+{% from '_macros.html' import sci with context %}
+{% block main %}
+<section class="hero">
+  <div class="inner">
+    <span class="badge is-outline is-primary is-round">{{ t('hero_badge', n='{:,}'.format(data_meta.taxa|int)) }}</span>
+    <h1>{{ t('hero_title') }}</h1>
+    <p>{{ t('hero_lead') }}</p>
+    <form class="searchbox is-lg" action="{{ url_for('search') }}" role="search">
+      <div class="field">{{ icon('search') }}<input class="input is-round" type="search" name="q" placeholder="{{ t('search_placeholder') }}" aria-label="{{ t('nav_search') }}"></div>
+      <button type="submit" class="button is-plain is-primary is-round">{{ t('search_btn') }}</button>
+    </form>
+    <div class="chips">
+      {% for s in suggestions %}
+      <a href="{{ url_for('search', q=s) }}" class="button is-melt is-round is-xs">{% if s.isascii() %}<i class="en">{{ s }}</i>{% else %}{{ s }}{% endif %}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="wrap home-section">
+  <div class="section-head">
+    <h2>{{ t('browse_kingdom') }}</h2>
+    <a href="{{ url_for('taxonomy') }}">{{ t('taxonomy_tree') }} {{ icon('arrow-right') }}</a>
+  </div>
+  <div class="kingdom-grid">
+    {% for k in kingdoms %}
+    <a class="kingdom-card hover-bg" href="{{ url_for('taxonomy', node=k.taxon_id) }}">
+      <span class="name">{{ k.common_name_c or k.simple_name }}</span>
+      <span class="en muted">{{ k.simple_name }}</span>
+      <span class="count">{{ t('species_count', n='{:,}'.format(k.n_species)) }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="wrap home-section">
+  <div class="section-head">
+    <h2>{{ t('recent') }}</h2>
+    <a href="{{ url_for('search', sort='-updated') }}">{{ t('all_records') }}</a>
+  </div>
+  <div>
+    {% for r in recent %}
+    <a class="list-row hover-bg" href="{{ url_for('taxon', taxon_id=r.taxon_id) }}">
+      <span class="sci">{{ sci(r) }}</span>
+      <span>{{ r.common_name_c or '' }}</span>
+      <span class="muted hide-sm">{{ r.family_c or '' }} <span class="en">{{ r.family or '' }}</span></span>
+      <span class="mono muted" style="font-size:12px">{{ r.updated_at }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

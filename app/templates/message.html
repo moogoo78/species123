@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} · {{ t('site_name') }}{% endblock %}
+{% block main %}
+<div class="message">
+  <h1>{{ title }}</h1>
+  <p>{{ hint }}</p>
+  <p><a href="{{ url_for('home') }}">{{ t('home') }}</a></p>
+</div>
+{% endblock %}

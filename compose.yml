@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    image: taien/app
+    ports:
+      - "8000:8000"
+    environment:
+      - TAIEN_DATA=/code/data
+    volumes:
+      - ./data:/code/data

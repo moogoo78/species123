@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% from '_icons.html' import icon %}
+{% from '_macros.html' import sci, badge_list with context %}
+{% block title %}{{ f.q or t('nav_search') }} · {{ t('site_name') }}{% endblock %}
+
+{% macro facet_label(name, v) -%}
+{%- if name == 'kingdom' -%}{{ kingdom_zh.get(v, v) if lang == 'zh' else v }}
+{%- elif name == 'rank' -%}{{ rank_label(v) }}
+{%- elif name == 'endemic' -%}{{ t('endemic') if v == '1' else t('not_endemic') }}
+{%- elif name == 'alien' -%}{{ code(tables.ALIEN, v) }}
+{%- elif name == 'redlist' -%}{{ code(tables.REDLIST, v) }} <span class="muted en">{{ v }}</span>
+{%- elif name == 'protected' -%}{{ code(tables.PROTECTED, v) }}
+{%- else -%}{{ v }}{%- endif -%}
+{%- endmacro %}
+
+{% macro sort_th(key, label) -%}
+{% set cur = sort.lstrip('-') == key %}
+<th><a href="{{ url_with(sort=('-' + key) if cur and not sort.startswith('-') else key, page=None) }}">{{ label }} <span class="arrow">{% if cur %}{{ '↓' if sort.startswith('-') else '↑' }}{% endif %}</span></a></th>
+{%- endmacro %}
+
+{% block main %}
+<form class="wrap page-body with-sidebar" action="{{ url_for('search') }}" data-search-form>
+  {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+  {% if under %}<input type="hidden" name="under" value="{{ under.taxon_id }}">{% endif %}
+  <aside class="sidebar">
+    {% for name, title in [('kingdom', 'f_kingdom'), ('rank', 'f_rank'), ('endemic', 'f_endemic'), ('alien', 'f_alien'), ('redlist', 'f_redlist'), ('protected', 'f_protected')] %}
+    {% if facets[name] %}
+    <fieldset class="facet">
+      <h3 class="eyebrow">{{ t(title) }}</h3>
+      {% for v, n in facets[name] %}
+      <label class="label is-middle is-flex is-gap-xs">
+        <input type="checkbox" class="input" name="{{ name }}" value="{{ v }}" {{ 'checked' if v in f[name] }}>
+        <span class="checkbox"></span>
+        <span class="text" style="flex:1">{{ facet_label(name, v) }}</span>
+        <span class="n">{{ '{:,}'.format(n) }}</span>
+      </label>
+      {% endfor %}
+    </fieldset>
+    {% endif %}
+    {% endfor %}
+    <noscript><button type="submit" class="button is-outline is-round is-sm">{{ t('filters') }}</button></noscript>
+  </aside>
+
+  <section style="display:flex;flex-direction:column;gap:16px;min-width:0">
+    <div class="searchbox" role="search">
+      <div class="field">{{ icon('search') }}<input class="input is-round" type="search" name="q" value="{{ f.q }}" placeholder="{{ t('search_placeholder') }}" aria-label="{{ t('nav_search') }}"></div>
+      <button type="submit" class="button is-plain is-primary is-round">{{ t('search_btn') }}</button>
+    </div>
+
+    <div class="results-bar">
+      <span class="summary">{% if f.q %}{{ t('n_results_for', n='{:,}'.format(total), q=f.q) }}{% else %}{{ t('n_results', n='{:,}'.format(total)) }}{% endif %}</span>
+      {% if under %}
+      <a href="{{ url_with(under=None, page=None) }}" class="button is-melt is-primary is-round is-xs" style="display:flex;align-items:center;gap:4px">{{ t('within', name=under.common_name_c or under.simple_name) }} {{ icon('x', '12px') }}</a>
+      {% endif %}
+      {% for name, v in active %}
+      <a href="{{ url_with(**{name: f[name]|reject('equalto', v)|list, 'page': None}) }}" class="button is-melt is-primary is-round is-xs" style="display:flex;align-items:center;gap:4px">{{ facet_label(name, v)|striptags }} {{ icon('x', '12px') }}</a>
+      {% endfor %}
+      <div class="right">
+        <span data-selected-label data-empty="{{ t('select_up_to') }}" data-tpl="{{ t('n_selected', n='{n}') }}">{{ t('select_up_to') }}</span>
+        <button type="button" class="button is-outline is-primary is-round is-sm" data-compare-selected disabled>{{ t('compare_selected') }}</button>
+      </div>
+    </div>
+
+    {% if results %}
+    <div class="table-frame">
+      <table class="table is-line is-middle results-table">
+        <thead><tr>
+          <th></th>
+          {{ sort_th('name', t('col_name')) }}
+          {{ sort_th('common', t('col_common')) }}
+          {{ sort_th('family', t('col_family')) }}
+          {{ sort_th('rank', t('col_rank')) }}
+          <th><span class="strong" style="font-weight:600">{{ t('col_status') }}</span></th>
+          {{ sort_th('updated', t('col_updated')) }}
+        </tr></thead>
+        <tbody>
+          {% for r in results %}
+          <tr data-href="{{ url_for('taxon', taxon_id=r.taxon_id) }}" data-row="{{ r.taxon_id }}">
+            <td><label class="label is-middle is-flex" style="cursor:pointer"><input type="checkbox" class="input" data-select="{{ r.taxon_id }}" aria-label="select {{ r.simple_name }}"><span class="checkbox"></span></label></td>
+            <td><a class="sci" href="{{ url_for('taxon', taxon_id=r.taxon_id) }}">{{ sci(r) }}</a></td>
+            <td>{{ r.common_name_c or '' }}</td>
+            <td class="nowrap">{{ r.family_c or '' }} <span class="en muted">{{ r.family or '' }}</span></td>
+            <td class="nowrap muted">{{ rank_label(r.rank) }}</td>
+            <td><span class="badges">{{ badge_list(r, compact=True) }}</span></td>
+            <td class="nowrap mono muted" style="font-size:12px">{{ r.updated_at or '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pages > 1 %}
+    <nav class="pager">
+      {% if page > 1 %}<a href="{{ url_with(page=page - 1) }}" class="button is-outline is-round is-sm">{{ t('prev') }}</a>{% endif %}
+      <span class="muted">{{ t('page_of', p=page, n='{:,}'.format(pages)) }}</span>
+      {% if page < pages %}<a href="{{ url_with(page=page + 1) }}" class="button is-outline is-round is-sm">{{ t('next') }}</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty">
+      <p class="title">{{ t('no_results') }}</p>
+      <p style="font-size:14px">{{ t('no_results_hint') }}</p>
+    </div>
+    {% endif %}
+  </section>
+</form>
+{% endblock %}

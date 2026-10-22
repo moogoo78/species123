@@ -1,0 +1,65 @@
+{% from '_icons.html' import icon %}
+<!doctype html>
+<html lang="{{ 'zh-Hant-TW' if lang == 'zh' else 'en' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ t('site_name') }} · {{ t('site_tagline') }}{% endblock %}</title>
+<meta name="description" content="{{ t('hero_lead') }}">
+<script>
+  // apply saved / system theme before first paint
+  (function () {
+    var th = null;
+    try { th = localStorage.getItem('taien.theme'); } catch (e) {}
+    if (!th) th = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', th);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('vendor', filename='musubii.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+<div class="page" lang="{{ lang }}">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-mark">{{ icon('feather', '16px') }}</span>
+        <span class="brand-name">{{ t('site_name') }}</span>
+        <span class="brand-sub">{{ t('site_tagline') }}</span>
+      </a>
+      <div class="header-tools">
+        <nav class="nav" aria-label="main">
+          {% set ep = request.endpoint %}
+          <a href="{{ url_for('search') }}" class="{{ 'is-active' if ep == 'search' }}">{{ t('nav_search') }}</a>
+          <a href="{{ url_for('taxonomy') }}" class="{{ 'is-active' if ep == 'taxonomy' }}">{{ t('nav_taxonomy') }}</a>
+          <a href="{{ url_for('compare') }}" data-compare-link class="{{ 'is-active' if ep == 'compare' }}">{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></a>
+        </nav>
+        <a class="icon-btn" href="{{ lang_url }}" hreflang="{{ 'en' if lang == 'zh' else 'zh-Hant' }}">{{ t('lang_switch') }}</a>
+        <button type="button" class="icon-btn" data-theme-toggle title="{{ t('theme') }}" aria-label="{{ t('theme') }}">
+          <span data-theme-icon="light">{{ icon('sun') }}</span><span data-theme-icon="dark" hidden>{{ icon('moon') }}</span>
+        </button>
+        <button type="button" class="icon-btn only-mobile" data-menu-toggle title="{{ t('menu') }}" aria-label="{{ t('menu') }}" aria-expanded="false">{{ icon('menu') }}</button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-menu" data-menu>
+    <a href="{{ url_for('search') }}">{{ t('nav_search') }}</a>
+    <a href="{{ url_for('taxonomy') }}">{{ t('nav_taxonomy') }}</a>
+    <a href="{{ url_for('compare') }}" data-compare-link>{{ t('nav_compare') }}</a>
+  </div>
+
+  <main>{% block main %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>{{ t('site_name') }} TaiEN · <a href="https://taicol.tw/" rel="noopener">{{ t('footer_source') }}</a>{% if data_meta.fetched_at %} · {{ t('footer_version', d=data_meta.fetched_at[:10]) }}{% endif %}</span>
+      <span><a href="https://api.taicol.tw/" rel="noopener">TaiCOL API</a></span>
+    </div>
+  </footer>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{% macro sci(t, author=True) -%}
+<span class="en">{{ (t.formatted_name or t.simple_name)|italic }}</span>{% if author and t.name_author %} <span class="author en">{{ t.name_author }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro badge_list(t, compact=False, size='is-xs') -%}
+{% for label, cls in badges(t, compact) %}<span class="badge {{ cls }} is-round {{ size }}">{{ label }}</span>{% endfor %}
+{%- endmacro %}

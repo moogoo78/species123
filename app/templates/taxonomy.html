@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% from '_icons.html' import icon %}
+{% from '_macros.html' import sci, badge_list with context %}
+{% block title %}{% if node %}{{ node.common_name_c or node.simple_name }} · {% endif %}{{ t('taxonomy_title') }} · {{ t('site_name') }}{% endblock %}
+{% block main %}
+<div class="wrap page-body">
+  <div class="title-row">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h1>{{ t('taxonomy_title') }}</h1>
+      <p style="font-size:14px">{{ t('taxonomy_lead') }}</p>
+    </div>
+    <button type="button" class="button is-outline is-round is-sm" data-tree-collapse>{{ t('collapse_all') }}</button>
+  </div>
+  <div class="tree-layout">
+    <div role="tree" class="tree" data-tree>
+      {% include '_tree_rows.html' %}
+    </div>
+    {% if node %}
+    <section class="node-panel">
+      <nav class="crumbs" aria-label="breadcrumb">
+        {% for a in lineage %}
+        {% if not loop.last %}<a href="{{ url_for('taxonomy', node=a.taxon_id) }}" class="en">{{ a.simple_name }}</a><span class="sep">/</span>{% else %}<span class="current en">{{ a.simple_name }}</span>{% endif %}
+        {% endfor %}
+      </nav>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span class="eyebrow is-primary">{{ rank_label(node.rank) }}</span>
+        <h2>{{ (node.formatted_name or node.simple_name)|italic }} <span class="author en" style="font-size:16px;font-weight:400">{{ node.name_author or '' }}</span></h2>
+        {% if node.common_name_c %}<p class="strong" style="font-size:18px">{{ node.common_name_c }}</p>{% endif %}
+      </div>
+      {% if stats %}
+      <div class="stats">
+        {% for r, n in stats %}
+        <div class="stat"><span class="v">{{ '{:,}'.format(n) }}</span><span class="l">{{ rank_label(r) }}</span></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+          <h3 class="strong" style="font-size:16px;font-weight:700">{{ t('children') }}</h3>
+          <span style="display:flex;gap:16px;font-size:14px;font-weight:500;white-space:nowrap">
+            <a href="{{ url_for('taxon', taxon_id=node.taxon_id) }}">{{ t('key_facts') }}</a>
+            <a href="{{ url_for('search', under=node.taxon_id) }}">{{ t('search_within') }}</a>
+          </span>
+        </div>
+        <div>
+          {% for k in kids %}
+          <a class="child-row hover-bg" href="{{ url_for('taxonomy', node=k.taxon_id) if k.n_children and k.rank != 'Species' else url_for('taxon', taxon_id=k.taxon_id) }}">
+            <span class="sci">{{ sci(k) }}</span>
+            <span>{{ k.common_name_c or '' }} <span class="ranklabel">{{ rank_label(k.rank) }}</span></span>
+            <span class="badges">{% if k.rank != 'Species' and k.n_species %}<span class="mono muted" style="font-size:12px">{{ t('species_count', n='{:,}'.format(k.n_species)) }}</span>{% else %}{{ badge_list(k, compact=True) }}{% endif %}</span>
+          </a>
+          {% endfor %}
+          {% if node.n_children > kids|length %}<p class="tree-more">{{ t('more_children', n='{:,}'.format(node.n_children - kids|length)) }} · <a href="{{ url_for('search', under=node.taxon_id) }}">{{ t('search_within') }}</a></p>{% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

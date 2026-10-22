@@ -1,0 +1,7 @@
+# dev: live-reload source (vendor CSS stays in the image at /code/vendor)
+services:
+  app:
+    command: flask --app app run --host 0.0.0.0 --port 8000 --debug
+    volumes:
+      - ./app:/code/app
+      - ./scripts:/code/scripts
