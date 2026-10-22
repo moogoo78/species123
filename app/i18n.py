@@ -24,6 +24,8 @@ STRINGS = {
     'recent': ('最近更新', 'Recently revised'),
     'all_records': ('所有紀錄', 'All records'),
     'filters': ('篩選', 'Filters'),
+    'f_group': ('常用類群', 'Common groups'),
+    'common_groups': ('常用類群', 'Common groups'),
     'f_kingdom': ('界', 'Kingdom'),
     'f_rank': ('階層', 'Rank'),
     'f_endemic': ('特有性', 'Endemism'),

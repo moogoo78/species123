@@ -1,4 +1,5 @@
 """SQL against the read-only TaiCOL snapshot."""
+from . import groups
 from .db import get_db
 
 PER_PAGE = 50
@@ -80,8 +81,31 @@ def siblings(t, exclude, limit=6):
                 'ORDER BY simple_name LIMIT ?', (t['parent_id'], *exclude, limit))
 
 
+def _group_cond(keys):
+    """SQL condition for 'under any root of these common groups' (a taxon counts as under itself)."""
+    roots = taxa([r for k in keys if k in groups.BY_KEY for r in groups.BY_KEY[k][2]])
+    if not roots:
+        return '0', []
+    params = [x for r in roots for x in (r['path'], f"{r['path']},%")]
+    return '(' + ' OR '.join('path = ? OR path LIKE ?' for _ in roots) + ')', params
+
+
+def group_cards():
+    """Home page: each common group with its root taxa and species count."""
+    out = []
+    for key, zh, en, ids in groups.GROUPS:
+        roots = taxa(ids)
+        if roots:
+            out.append({'key': key, 'zh': zh, 'en': en, 'roots': roots, 'n_species': sum(r['n_species'] for r in roots)})
+    return out
+
+
 def _where(f, skip=None, under_path=None):
     clauses, params = [], []
+    if f.get('group') and skip != 'group':
+        cond, cparams = _group_cond(f['group'])
+        clauses.append(cond)
+        params.extend(cparams)
     q = (f.get('q') or '').strip().lower()
     if q:
         clauses.append('search_text LIKE ?')
@@ -128,4 +152,10 @@ def facet_counts(f, under_path=None, rank_limit=10):
         if name == 'rank':
             sql += f' LIMIT {rank_limit}'
         out[name] = [(str(r['v']), r['n']) for r in rows(sql, params)]
+    # common groups: one pass, one conditional count per group
+    where, params = _where(f, skip='group', under_path=under_path)
+    conds = [(key, *_group_cond([key])) for key, *_ in groups.GROUPS]
+    sums = ', '.join(f'sum(CASE WHEN {c} THEN 1 ELSE 0 END)' for _, c, _ in conds)
+    counts = one(f'SELECT {sums} FROM taxon{where}', [x for _, _, cp in conds for x in cp] + params)
+    out['group'] = [(key, n or 0) for (key, _, _), n in zip(conds, counts) if n]
     return out

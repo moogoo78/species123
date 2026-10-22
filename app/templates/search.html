@@ -4,7 +4,8 @@
 {% block title %}{{ f.q or t('nav_search') }} · {{ t('site_name') }}{% endblock %}
 
 {% macro facet_label(name, v) -%}
-{%- if name == 'kingdom' -%}{{ kingdom_zh.get(v, v) if lang == 'zh' else v }}
+{%- if name == 'group' -%}{{ group_label(v) }}
+{%- elif name == 'kingdom' -%}{{ kingdom_zh.get(v, v) if lang == 'zh' else v }}
 {%- elif name == 'rank' -%}{{ rank_label(v) }}
 {%- elif name == 'endemic' -%}{{ t('endemic') if v == '1' else t('not_endemic') }}
 {%- elif name == 'alien' -%}{{ code(tables.ALIEN, v) }}
@@ -23,7 +24,7 @@
   {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
   {% if under %}<input type="hidden" name="under" value="{{ under.taxon_id }}">{% endif %}
   <aside class="sidebar">
-    {% for name, title in [('kingdom', 'f_kingdom'), ('rank', 'f_rank'), ('endemic', 'f_endemic'), ('alien', 'f_alien'), ('redlist', 'f_redlist'), ('protected', 'f_protected')] %}
+    {% for name, title in [('group', 'f_group'), ('kingdom', 'f_kingdom'), ('rank', 'f_rank'), ('endemic', 'f_endemic'), ('alien', 'f_alien'), ('redlist', 'f_redlist'), ('protected', 'f_protected')] %}
     {% if facets[name] %}
     <fieldset class="facet">
       <h3 class="eyebrow">{{ t(title) }}</h3>

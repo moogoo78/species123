@@ -21,6 +21,21 @@
 
 <section class="wrap home-section">
   <div class="section-head">
+    <h2>{{ t('common_groups') }}</h2>
+  </div>
+  <div class="group-grid">
+    {% for gr in groups %}
+    <a class="group-card hover-bg" href="{{ url_for('search', group=gr.key, rank='Species') }}">
+      <span class="name">{{ gr.zh if lang == 'zh' else gr.en }}</span>
+      <span class="en muted latin">{{ gr.roots|map(attribute='simple_name')|join(' · ') }}</span>
+      <span class="count">{{ t('species_count', n='{:,}'.format(gr.n_species)) }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="wrap home-section">
+  <div class="section-head">
     <h2>{{ t('browse_kingdom') }}</h2>
     <a href="{{ url_for('taxonomy') }}">{{ t('taxonomy_tree') }} {{ icon('arrow-right') }}</a>
   </div>

@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from flask import Flask, abort, g, render_template, request, send_from_directory
 from markupsafe import Markup, escape
 
-from . import i18n, photos, queries, taicol
+from . import groups, i18n, photos, queries, taicol
 from .db import close_db, get_db
 
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -49,7 +49,7 @@ def create_app():
     def helpers():
         return {
             'lang': g.lang, 't': g.t, 'code': g.code, 'rank_label': g.rank, 'tables': i18n,
-            'badges': badges, 'url_with': url_with, 'lang_url': url_with(lang='en' if g.lang == 'zh' else 'zh'),
+            'badges': badges, 'url_with': url_with, 'group_label': lambda k: groups.label(k, g.lang), 'lang_url': url_with(lang='en' if g.lang == 'zh' else 'zh'),
             'data_meta': data_meta(),
         }
 
@@ -107,11 +107,11 @@ def create_app():
 
     @app.route('/')
     def home():
-        return render_template('home.html', kingdoms=queries.kingdoms(), recent=queries.recent(),
+        return render_template('home.html', kingdoms=queries.kingdoms(), recent=queries.recent(), groups=queries.group_cards(),
                                suggestions=['Begonia formosana', '水鴨腳', 'Ursus thibetanus', '蘭科', 'Lepidoptera'])
 
     def search_filters():
-        f = {name: request.args.getlist(name) for name in queries.FACETS}
+        f = {name: request.args.getlist(name) for name in [*queries.FACETS, 'group']}
         f['q'] = request.args.get('q', '').strip()
         return f
 
@@ -124,7 +124,7 @@ def create_app():
         under_path = under['path'] if under else None
         total, results = queries.search(f, sort, page, under_path)
         pages = max((total + queries.PER_PAGE - 1) // queries.PER_PAGE, 1)
-        active = [(name, v) for name in queries.FACETS for v in f[name]]
+        active = [(name, v) for name in ['group', *queries.FACETS] for v in f[name]]
         return render_template('search.html', f=f, results=results, total=total, page=page, pages=pages, sort=sort,
                                facets=queries.facet_counts(f, under_path), active=active, under=under,
                                kingdom_zh={k['simple_name']: k['common_name_c'] for k in queries.kingdoms()})
