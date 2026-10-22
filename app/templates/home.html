@@ -26,6 +26,7 @@
   <div class="group-grid">
     {% for gr in groups %}
     <a class="group-card hover-bg" href="{{ url_for('search', group=gr.key, rank='Species') }}">
+      <span class="group-icon">{{ icon('g-' ~ gr.key) }}</span>
       <span class="name">{{ gr.zh if lang == 'zh' else gr.en }}</span>
       <span class="en muted latin">{{ gr.roots|map(attribute='simple_name')|join(' · ') }}</span>
       <span class="count">{{ t('species_count', n='{:,}'.format(gr.n_species)) }}</span>

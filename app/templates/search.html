@@ -4,7 +4,7 @@
 {% block title %}{{ f.q or t('nav_search') }} · {{ t('site_name') }}{% endblock %}
 
 {% macro facet_label(name, v) -%}
-{%- if name == 'group' -%}{{ group_label(v) }}
+{%- if name == 'group' -%}<span class="facet-icon">{{ icon('g-' ~ v) }}</span>{{ group_label(v) }}
 {%- elif name == 'kingdom' -%}{{ kingdom_zh.get(v, v) if lang == 'zh' else v }}
 {%- elif name == 'rank' -%}{{ rank_label(v) }}
 {%- elif name == 'endemic' -%}{{ t('endemic') if v == '1' else t('not_endemic') }}
