@@ -15,8 +15,7 @@ GROUPS = [
     ('insects', '昆蟲', 'Insects', ['t0000512']),                   # Insecta
     ('arachnids', '蛛形綱', 'Arachnids', ['t0000468']),             # Arachnida
     ('crustaceans', '甲殼類', 'Crustaceans', ['t0000181']),         # Crustacea
-    ('shells', '貝類', 'Shelled molluscs', ['t0000503', 't0000472', 't0000539', 't0000548']),
-    # Gastropoda, Bivalvia, Polyplacophora, Scaphopoda (no cephalopods / aplacophorans)
+    ('molluscs', '貝類', 'Molluscs', ['t0000115']),                # Mollusca (whole phylum, incl. cephalopods)
     ('plants', '植物', 'Plants', ['t0000003']),                     # Plantae
     ('fungi', '真菌', 'Fungi', ['t0000008']),                       # Fungi
 ]
