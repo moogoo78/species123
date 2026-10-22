@@ -5,16 +5,20 @@ so it lists several roots.
 """
 
 GROUPS = [
-    # key, zh, en, TaiCOL root taxon_ids
+    # key, zh, en, TaiCOL root taxon_ids — vertebrates, invertebrates, plants, fungi
     ('birds', '鳥類', 'Birds', ['t0000650']),                       # Aves
     ('amphibians', '兩棲類', 'Amphibians', ['t0000464']),           # Amphibia
     ('reptiles', '爬蟲類', 'Reptiles', ['t0000545']),               # Reptilia
     ('mammals', '哺乳類', 'Mammals', ['t0000517']),                 # Mammalia
-    ('arachnids', '蛛形綱', 'Arachnids', ['t0000468']),             # Arachnida
-    ('insects', '昆蟲', 'Insects', ['t0000512']),                   # Insecta
-    ('plants', '植物', 'Plants', ['t0000003']),                     # Plantae
     ('fishes', '魚類', 'Fishes', ['t0000203', 't0000204', 't0000205', 't0000522', 't0122974']),
     # Actinopterygii, Chondrichthyes, Sarcopterygii, Myxini, Petromyzonti
+    ('insects', '昆蟲', 'Insects', ['t0000512']),                   # Insecta
+    ('arachnids', '蛛形綱', 'Arachnids', ['t0000468']),             # Arachnida
+    ('crustaceans', '甲殼類', 'Crustaceans', ['t0000181']),         # Crustacea
+    ('shells', '貝類', 'Shelled molluscs', ['t0000503', 't0000472', 't0000539', 't0000548']),
+    # Gastropoda, Bivalvia, Polyplacophora, Scaphopoda (no cephalopods / aplacophorans)
+    ('plants', '植物', 'Plants', ['t0000003']),                     # Plantae
+    ('fungi', '真菌', 'Fungi', ['t0000008']),                       # Fungi
 ]
 BY_KEY = {k: (zh, en, roots) for k, zh, en, roots in GROUPS}
 
