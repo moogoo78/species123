@@ -96,6 +96,7 @@ STRINGS = {
     'common_names': ('俗名', 'Common names'),
     'literature': ('文獻', 'Literature'),
     'none_recorded': ('無紀錄。', 'None recorded.'),
+    'refs_credit': ('文獻來源：臺灣物種名錄 TaiCOL', 'Literature: Taiwan Catalogue of Life (TaiCOL)'),
     'refs_unavailable': ('目前無法取得 TaiCOL 文獻資料。', 'Literature from TaiCOL is unavailable right now.'),
     'revised': ('TaiCOL 更新於 {d}', 'Revised on TaiCOL {d}'),
     'on_this_page': ('本頁內容', 'On this page'),
