@@ -159,3 +159,13 @@ def facet_counts(f, under_path=None, rank_limit=10):
     counts = one(f'SELECT {sums} FROM taxon{where}', [x for _, _, cp in conds for x in cp] + params)
     out['group'] = [(key, n or 0) for (key, _, _), n in zip(conds, counts) if n]
     return out
+
+
+def by_names(names):
+    """Exact scientific-name lookup: {simple_name: [rows]} (a name can be a homonym across kingdoms)."""
+    names, out = list(names), {}
+    for i in range(0, len(names), 500):
+        chunk = names[i:i + 500]
+        for r in rows(f'SELECT {LIST_COLS}, depth FROM taxon WHERE simple_name IN ({",".join("?" * len(chunk))})', chunk):
+            out.setdefault(r['simple_name'], []).append(r)
+    return out

@@ -35,6 +35,7 @@
           {% set ep = request.endpoint %}
           <a href="{{ url_for('search') }}" class="{{ 'is-active' if ep == 'search' }}">{{ t('nav_search') }}</a>
           <a href="{{ url_for('taxonomy') }}" class="{{ 'is-active' if ep == 'taxonomy' }}">{{ t('nav_taxonomy') }}</a>
+          <a href="{{ url_for('names') }}" class="{{ 'is-active' if ep == 'names' }}">{{ t('nav_names') }}</a>
           <a href="{{ url_for('compare') }}" data-compare-link class="{{ 'is-active' if ep == 'compare' }}">{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></a>
         </nav>
         <a class="icon-btn" href="{{ lang_url }}" hreflang="{{ 'en' if lang == 'zh' else 'zh-Hant' }}">{{ t('lang_switch') }}</a>
@@ -48,6 +49,7 @@
   <div class="mobile-menu" data-menu>
     <a href="{{ url_for('search') }}">{{ t('nav_search') }}</a>
     <a href="{{ url_for('taxonomy') }}">{{ t('nav_taxonomy') }}</a>
+    <a href="{{ url_for('names') }}">{{ t('nav_names') }}</a>
     <a href="{{ url_for('compare') }}" data-compare-link>{{ t('nav_compare') }}</a>
   </div>
 

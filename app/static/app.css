@@ -259,3 +259,10 @@ main { flex: 1; }
 .message { max-width: 640px; margin: 0 auto; padding: 96px 20px; text-align: center; display: flex; flex-direction: column; gap: 12px; }
 .message h1 { font-size: 28px; font-weight: 700; color: var(--theme-tx-1); }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--theme-dark); color: var(--theme-bg-1); padding: 8px 16px; border-radius: 9999em; font-size: 14px; z-index: 100; }
+
+/* name extractor */
+.names-input { width: 100%; min-height: 200px; padding: 12px 16px; font-size: 14px; line-height: 1.6; resize: vertical; }
+.names-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.results-table tr.group-row { background: var(--theme-bg-2); cursor: default; }
+.results-table tr.group-row th { font-size: 13px; font-weight: 600; color: var(--theme-tx-1); }
+.unmatched { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -1,14 +1,17 @@
+import csv
+import io
 import os
 from datetime import date
 from urllib.parse import urlencode
 
-from flask import Flask, abort, g, render_template, request, send_from_directory
+from flask import Flask, Response, abort, g, render_template, request, send_from_directory
 from markupsafe import Markup, escape
 
-from . import groups, i18n, photos, queries, taicol
+from . import extract, groups, i18n, photos, queries, taicol
 from .db import close_db, get_db
 
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
+INFRA_RANKS = {'Subspecies', 'Variety', 'Form', 'Subvariety', 'Subform', 'Special Form', 'Race', 'Stirps', 'Morph', 'Aberration', 'Hybrid Formula'}
 TREE_LIMIT = 200
 COMPARE_MAX = 4
 LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the default
@@ -241,6 +244,57 @@ def create_app():
         genera = {t['genus'] for t in cmp}
         return render_template('compare.html', cmp=cmp, groups=compare_groups(cmp) if cmp else [], suggest=suggest[:6],
                                ids=[t['taxon_id'] for t in cmp], same_genus=genera.pop() if len(genera) == 1 and cmp else None)
+
+    def match_names(hits):
+        """Checklist rows (one per taxon, merged across spellings) and the names that matched nothing."""
+        lookup = queries.by_names({n for h in hits for n, _ in h.candidates} | {h.genus for h in hits if h.genus})
+        found, missing = {}, []
+
+        def put(taxa, verbatim, count, partial=False):
+            for t in taxa:
+                row = found.setdefault(t['taxon_id'], {'t': t, 'verbatim': [], 'count': 0, 'partial': False})
+                if verbatim not in row['verbatim']:
+                    row['verbatim'].append(verbatim)
+                row['count'] += count
+                row['partial'] = row['partial'] or partial
+
+        for h in hits:
+            name, verbatim = next(((n, v) for n, v in h.candidates if n in lookup), (None, None))
+            if name:
+                # a rank-marked infraspecific name ("… var. x") that only matched its species
+                partial = name != h.candidates[0][0] and '. ' in h.candidates[0][0]
+                put(lookup[name], h.candidates[0][1] if partial else verbatim, h.count, partial)
+            elif h.genus in lookup:
+                higher = [t for t in lookup[h.genus] if t['rank'] != 'Genus']
+                put(higher or lookup[h.genus], h.genus, h.count)
+                if not higher:  # "Genus epithet" with a known genus: worth reporting the epithet as missing
+                    missing.append({'name': h.candidates[0][1], 'genus': lookup[h.genus][0], 'count': h.count})
+        rows = sorted(found.values(), key=lambda r: (r['t']['kingdom'] or '', r['t']['family'] or '\uffff',
+                                                     r['t']['depth'], r['t']['simple_name']))
+        return rows, missing
+
+    @app.route('/names', methods=['GET', 'POST'])
+    def names():
+        text = request.form.get('text', '')
+        rows, missing = match_names(extract.names(text)) if text.strip() else ([], [])
+        if request.form.get('format') == 'csv':
+            out = io.StringIO()
+            w = csv.writer(out)
+            w.writerow(['verbatim', 'count', 'taxon_id', 'simple_name', 'name_author', 'common_name_c', 'rank',
+                        'family', 'family_c', 'kingdom', 'is_endemic', 'alien_type', 'redlist', 'iucn', 'protected', 'url'])
+            for r in rows:
+                t = r['t']
+                w.writerow(['; '.join(r['verbatim']), r['count'], t['taxon_id'], t['simple_name'], t['name_author'],
+                            t['common_name_c'], t['rank'], t['family'], t['family_c'], t['kingdom'], t['is_endemic'],
+                            t['alien_type'], t['redlist'], t['iucn'], t['protected'],
+                            f"https://taicol.tw/zh-hant/taxon/{t['taxon_id']}"])
+            for m in missing:
+                w.writerow([m['name'], m['count']] + [''] * 14)
+            return Response('\ufeff' + out.getvalue(), mimetype='text/csv',
+                            headers={'Content-Disposition': f'attachment; filename=taien-checklist-{date.today().isoformat()}.csv'})
+        n_species = sum(1 for r in rows if r['t']['rank'] == 'Species' or r['t']['rank'] in INFRA_RANKS)
+        return render_template('names.html', text=text, rows=rows, missing=missing, n_species=n_species,
+                               max_chars=extract.MAX_CHARS)
 
     @app.errorhandler(404)
     def not_found(e):

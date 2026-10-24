@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% from '_icons.html' import icon %}
+{% from '_macros.html' import sci, badge_list with context %}
+{% block title %}{{ t('nav_names') }} · {{ t('site_name') }}{% endblock %}
+{% block main %}
+<form class="wrap page-body" method="post" action="{{ url_for('names') }}" data-search-form style="display:flex;flex-direction:column;gap:16px">
+  <div class="title-row" style="margin-bottom:0">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h1>{{ t('nav_names') }}</h1>
+      <p style="font-size:14px">{{ t('names_lead') }}</p>
+    </div>
+  </div>
+  <textarea class="input names-input" name="text" maxlength="{{ max_chars }}" placeholder="{{ t('names_placeholder') }}" aria-label="{{ t('nav_names') }}">{{ text }}</textarea>
+  <div class="names-actions">
+    <button type="submit" class="button is-plain is-primary is-round">{{ t('names_btn') }}</button>
+    {% if rows %}<button type="submit" name="format" value="csv" class="button is-outline is-round">{{ t('names_csv') }}</button>{% endif %}
+  </div>
+
+  {% if text.strip() %}
+  {% if rows %}
+  <div class="results-bar">
+    <span class="summary">{{ t('names_summary', n='{:,}'.format(rows|length), s='{:,}'.format(n_species)) }}</span>
+    <div class="right">
+      <span data-selected-label data-empty="{{ t('select_up_to') }}" data-tpl="{{ t('n_selected', n='{n}') }}">{{ t('select_up_to') }}</span>
+      <button type="button" class="button is-outline is-primary is-round is-sm" data-compare-selected disabled>{{ t('compare_selected') }}</button>
+    </div>
+  </div>
+  <div class="table-frame">
+    <table class="table is-line is-middle results-table">
+      <thead><tr>
+        <th></th>
+        <th>{{ t('col_name') }}</th>
+        <th>{{ t('col_common') }}</th>
+        <th>{{ t('col_rank') }}</th>
+        <th>{{ t('col_status') }}</th>
+        <th>{{ t('col_verbatim') }}</th>
+        <th>{{ t('col_count') }}</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        {% set x = r.t %}
+        {% if loop.first or (x.kingdom, x.family) != (loop.previtem.t.kingdom, loop.previtem.t.family) %}
+        <tr class="group-row"><th colspan="7">
+          {% if x.family %}{{ x.family_c or '' }} <span class="en">{{ x.family }}</span>{% else %}{{ t('higher_taxa') }}{% endif %}
+          <span class="muted en" style="font-weight:400"> · {{ x.kingdom or '' }}</span>
+        </th></tr>
+        {% endif %}
+        <tr data-href="{{ url_for('taxon', taxon_id=x.taxon_id) }}" data-row="{{ x.taxon_id }}">
+          <td><label class="label is-middle is-flex" style="cursor:pointer"><input type="checkbox" class="input" data-select="{{ x.taxon_id }}" aria-label="select {{ x.simple_name }}"><span class="checkbox"></span></label></td>
+          <td><a class="sci" href="{{ url_for('taxon', taxon_id=x.taxon_id) }}">{{ sci(x) }}</a></td>
+          <td>{{ x.common_name_c or '' }}</td>
+          <td class="nowrap muted">{{ rank_label(x.rank) }}</td>
+          <td><span class="badges">{{ badge_list(x, compact=True) }}</span></td>
+          <td class="muted" style="font-size:13px">
+            {% for v in r.verbatim if v != x.simple_name %}<span class="en">{{ v }}</span>{{ '; ' if not loop.last }}{% endfor %}
+            {% if r.partial %}<span class="badge is-outline is-warning is-round is-xs">{{ t('partial_match') }}</span>{% endif %}
+          </td>
+          <td class="nowrap mono muted">{{ r.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <p class="title">{{ t('names_none') }}</p>
+    <p style="font-size:14px">{{ t('names_none_hint') }}</p>
+  </div>
+  {% endif %}
+
+  {% if missing %}
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <h2 class="eyebrow">{{ t('names_unmatched') }} · {{ missing|length }}</h2>
+    <p class="muted" style="font-size:13px">{{ t('names_unmatched_hint') }}</p>
+    <div class="unmatched">
+      {% for m in missing %}
+      <a href="{{ url_for('search', under=m.genus.taxon_id) }}" class="button is-outline is-round is-xs en"><i>{{ m.name }}</i></a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% endif %}
+</form>
+{% endblock %}
