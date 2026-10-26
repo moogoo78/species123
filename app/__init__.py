@@ -19,6 +19,7 @@ COMPARE_MAX = 4
 LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the default
 # facts shown under the field guide's biology tab rather than the overview
 DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note', 'fact_habitat', 'fact_fossil'}
+DIST_STATUS = ('native', 'introduced', 'extinct', 'doubtful')  # WCVP distribution, in legend order
 VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
 # external links in display order. Ids come from Wikidata (matched on the TaiCOL id) or, for GBIF and
 # iNaturalist only, from an exact accepted-name match; gbif_legacy only when there is no post-2026 GBIF id
@@ -29,6 +30,8 @@ EXT_LINKS = [
     ('ebird', 'eBird', 'https://ebird.org/species/{}'),
     ('xenocanto', 'xeno-canto', 'https://xeno-canto.org/species/{}'),
     ('wikidata', 'Wikidata', 'https://www.wikidata.org/wiki/{}'),
+    ('powo', 'POWO', 'https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:{}'),
+    ('ipni', 'IPNI', 'https://www.ipni.org/n/{}'),
 ]
 
 
@@ -228,7 +231,14 @@ def create_app():
         ]
         return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
 
-    def ext_links(t, xrefs, inat_id):
+    def wcvp_facts(w):
+        """Rows of the species page's WCVP box."""
+        rows = [('fact_lifeform', i18n.wcvp_terms(w['lifeform'], g.lang, 'lifeform')),
+                ('fact_climate', i18n.wcvp_terms(w['climate'], g.lang, 'climate')),
+                ('fact_range', w['range'])]
+        return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
+
+    def ext_links(t, xrefs, inat_id, w):
         # the Wikidata item itself: found by TaiCOL id or by name; the ids it holds: from Wikidata, or Wikidata via a name match
         x = {src: [(i, ('taicol_id' if via == 'taicol_id' else 'name') if src == 'wikidata'
                     else ('wikidata' if via == 'taicol_id' else 'wikidata_name')) for i, via in ids]
@@ -241,6 +251,9 @@ def create_app():
                 x['gbif_legacy'] = [(str(key), 'name')]
         if inat_id and 'inaturalist' not in x:
             x['inaturalist'] = [(str(inat_id), 'name')]  # the photos' name match
+        for src in ('powo', 'ipni'):
+            if w and w[src + '_id']:
+                x[src] = [(w[src + '_id'], 'wcvp')]
         return [{'label': label, 'id': i, 'url': url.format(i), 'via': via}
                 for src, label, url in EXT_LINKS for i, via in x.get(src, [])]
 
@@ -269,8 +282,12 @@ def create_app():
                 f". TaiCOL 臺灣物種名錄. https://taicol.tw/zh-hant/taxon/{t['taxon_id']} (accessed {date.today().isoformat()})")
         pics = photos.taxon_photos(t['simple_name'], t['kingdom'])
         xrefs = queries.xrefs(t['taxon_id'])
+        w = queries.wcvp(t['taxon_id'])
+        dist = queries.wcvp_dist(t['taxon_id']) if w else []
         return render_template('taxon.html', tx=t, layout=layout, lineage=lin, crumbs=[x for x in lin if x['rank'] in MAJOR_RANKS],
-                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, xrefs, pics.get('inat_id')),
+                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, xrefs, pics.get('inat_id'), w),
+                               wcvp=w, wcvp_facts=wcvp_facts(w) if w else [], dist=dist, dist_codes={d['area_code']: d['status'] for d in dist},
+                               dist_status=[s for s in DIST_STATUS if any(d['status'] == s for d in dist)],
                                refs=taicol.references(t['name_id']), pics=pics,
                                desc=description(t, xrefs, lin), in_galleries=galleries_of(t),
                                unplaced=lin[0]['rank'] not in queries.TOP_RANKS,

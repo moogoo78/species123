@@ -200,6 +200,41 @@
     show(location.hash.slice(1));
   }
 
+  // world distribution: inline the WGSRPD map, colour the taxon's regions, zoom to them
+  var maps = $$('[data-range-map]');
+  if (maps.length) {
+    fetch(maps[0].dataset.rangeMap)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (svg) { maps.forEach(function (el) { paintRange(el, svg); }); })
+      .catch(function () { maps.forEach(function (el) { el.hidden = true; }); });
+  }
+  function paintRange(el, svg) {
+    var range = JSON.parse(el.dataset.range || '{}');
+    el.innerHTML = svg;
+    var root = $('svg', el), box = null;
+    root.setAttribute('role', 'img');
+    $$('[data-code]', root).forEach(function (shape) {
+      var status = range[shape.dataset.code];
+      if (shape.dataset.code === 'TAI') shape.classList.add('is-taiwan');
+      if (!status) return;
+      shape.dataset.status = status;
+      var b = shape.getBBox();
+      box = box ? { x0: Math.min(box.x0, b.x), y0: Math.min(box.y0, b.y), x1: Math.max(box.x1, b.x + b.width), y1: Math.max(box.y1, b.y + b.height) }
+                : { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height };
+    });
+    if (!box) return;
+    // pad, keep at least a sixth of the world and a 2:1 frame, stay inside the map
+    var vb = root.viewBox.baseVal, pad = 20;
+    var w = Math.max(box.x1 - box.x0 + 2 * pad, vb.width / 6), h = Math.max(box.y1 - box.y0 + 2 * pad, w / 2);
+    w = Math.min(Math.max(w, h * 2), vb.width); h = Math.min(h, vb.height);
+    var x = Math.min(Math.max((box.x0 + box.x1 - w) / 2, 0), vb.width - w);
+    var y = Math.min(Math.max((box.y0 + box.y1 - h) / 2, 0), vb.height - h);
+    root.setAttribute('viewBox', [x, y, w, h].map(function (v) { return v.toFixed(1); }).join(' '));
+    // island markers: about 4 screen px whatever the zoom
+    var r = (4 * w / (el.clientWidth || 720)).toFixed(2);
+    $$('.dot', root).forEach(function (c) { c.setAttribute('r', r); });
+  }
+
   // copy citation
   $$('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {

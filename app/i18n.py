@@ -1,4 +1,5 @@
 """zh-TW (default) / English UI strings and TaiCOL code labels."""
+import re
 
 LANGS = ('zh', 'en')
 DEFAULT_LANG = 'zh'
@@ -122,9 +123,11 @@ STRINGS = {
     'via_taicol_id': ('TaiCOL ID', 'TaiCOL ID'),
     'via_name': ('學名比對', 'Name match'),
     'via_wikidata_name': ('Wikidata（學名比對）', 'Wikidata (name match)'),
-    'via_note': ('連結依據：Wikidata（以 TaiCOL ID 對應）或學名比對（與 TaiCOL 有效名完全相同；Wikidata 項目另須階層與科相同）',
-                 'Linked via Wikidata (matched on the TaiCOL ID) or a name match (identical to the TaiCOL accepted name; '
-                 'for Wikidata items, also the same rank and family)'),
+    'via_wcvp': ('WCVP', 'WCVP'),
+    'via_note': ('連結依據：Wikidata（以 TaiCOL ID 對應）、學名比對（與 TaiCOL 有效名完全相同；Wikidata 項目另須階層與科相同），'
+                 '或 WCVP（POWO、IPNI，維管束植物）',
+                 'Linked via Wikidata (matched on the TaiCOL ID), a name match (identical to the TaiCOL accepted name; '
+                 'for Wikidata items, also the same rank and family), or WCVP (POWO and IPNI, vascular plants)'),
     'key_facts': ('重點資訊', 'Key facts'),
     'description': ('描述', 'Description'),
     'desc_credit': ('內容取自維基百科', 'From Wikipedia'),
@@ -156,6 +159,23 @@ STRINGS = {
     'fact_cites': ('CITES', 'CITES'),
     'fact_protected': ('保育類', 'Protected'),
     'fact_species': ('所含種數', 'Species within'),
+    'fact_lifeform': ('生活型', 'Life form'),
+    'fact_climate': ('氣候帶', 'Climate'),
+    'fact_range': ('全球分布範圍', 'World range'),
+    'world_dist': ('全球分布', 'World distribution'),
+    'dist_native': ('原生', 'Native'),
+    'dist_introduced': ('引進', 'Introduced'),
+    'dist_extinct': ('已滅絕', 'Extinct'),
+    'dist_doubtful': ('存疑', 'Doubtful'),
+    'dist_list': ('分布地區（{n}）', 'Regions ({n})'),
+    'dist_note': ('以世界植物分布地理區（WGSRPD 第三級）標示，大致相當於國家或大國的省、州。',
+                  'Shown by WGSRPD level-3 region ("botanical country"): roughly a country, or a state or province of a large one.'),
+    'wcvp_box': ('WCVP 世界維管束植物名錄', 'World Checklist of Vascular Plants'),
+    'wcvp_nav': ('WCVP', 'WCVP'),
+    'wcvp_credit': ('資料來源：WCVP（英國皇家植物園邱園），以學名對應 TaiCOL 有效名',
+                    'Source: WCVP (Royal Botanic Gardens, Kew), matched to the TaiCOL accepted name by name'),
+    'wcvp_as': ('WCVP 採用的接受名為 {name}', 'WCVP accepts this as {name}'),
+    'view_powo': ('在 POWO 檢視', 'View on POWO'),
     'yes': ('是', 'Yes'),
     'no': ('否', 'No'),
     'h_terrestrial': ('陸域', 'Terrestrial'),
@@ -219,6 +239,57 @@ ALIEN = {
     'native': ('原生', 'Native'), 'naturalized': ('歸化', 'Naturalized'), 'invasive': ('入侵', 'Invasive'),
     'cultured': ('栽培／養殖', 'Cultivated'), 'cultivated': ('栽培', 'Cultivated'), 'casual': ('偶發', 'Casual'),
 }
+
+# WCVP life form / climate terms (https://powo.science.kew.org/about-wcvp). Life forms are
+# "[modifier ...] head", joined by " or " / ", "; zh puts the modifiers in front of the head too.
+LIFEFORM_HEAD = {
+    'perennial': '多年生草本', 'annual': '一年生草本', 'biennial': '二年生草本', 'tree': '喬木', 'shrub': '灌木',
+    'subshrub': '亞灌木', 'geophyte': '地下芽植物', 'epiphyte': '附生植物', 'climber': '攀緣植物', 'liana': '木質藤本',
+    'lithophyte': '石生植物', 'bamboo': '竹類', 'helophyte': '沼生植物', 'chamaephyte': '地表芽植物',
+    'holoparasite': '全寄生植物', 'holomycotroph': '完全菌根營養植物', 'succulent': '多肉植物',
+    'epiphytic': '附生植物', 'tuberous': '塊莖植物',
+}
+LIFEFORM_MOD = {
+    'rhizomatous': '根莖', 'rhizome': '根莖', 'tuberous': '塊莖', 'bulbous': '鱗莖', 'pseudobulbous': '假球莖',
+    'climbing': '攀緣', 'scrambling': '蔓生', 'succulent': '多肉', 'semisucculent': '半多肉', 'epiphytic': '附生',
+    'lithophytic': '石生', 'hemiparasitic': '半寄生', 'holoparasitic': '全寄生', 'holomycotrophic': '完全菌根營養',
+    'hemimycotrophic': '部分菌根營養', 'hemiepiphytic': '半附生', 'herbaceous': '草質', 'monocarpic': '一次開花',
+    'semiaquatic': '半水生', 'caudex': '莖基膨大', 'lignotuber': '木質塊莖',
+}
+CLIMATE = {
+    'temperate': '溫帶', 'wet tropical': '潮濕熱帶', 'subtropical': '亞熱帶', 'seasonally dry tropical': '季節性乾燥熱帶',
+    'subalpine': '亞高山', 'subarctic': '亞北極', 'desert': '沙漠', 'dry shrubland': '乾燥灌叢',
+    'montane tropical': '熱帶山地', 'tropical': '熱帶',
+}
+
+
+def _lifeform_zh(term):
+    words = term.lower().split()
+    head, mods = words[-1], words[:-1]
+    water = head.startswith('hydro') and head != 'hydro'
+    if water:
+        head = head[5:]
+    if head not in LIFEFORM_HEAD or any(m not in LIFEFORM_MOD for m in mods):
+        return None
+    return ('水生' if water else '') + ''.join(LIFEFORM_MOD[m] for m in mods) + LIFEFORM_HEAD[head]
+
+
+def wcvp_terms(text, lang, kind):
+    """WCVP life form (kind 'lifeform') or climate in zh; the whole text stays English when any part is unknown."""
+    if not text or lang == 'en':
+        return text or ''
+    parts = re.split(r'\s*(,|\bor\b|\band\b)\s*', text.strip())  # term, separator, term, ...
+    out = []
+    for i, part in enumerate(parts):
+        if i % 2:
+            out.append({'or': '或', 'and': '及'}.get(part, '、'))
+            continue
+        zh = _lifeform_zh(part) if kind == 'lifeform' else CLIMATE.get(part.lower())
+        if zh is None:
+            return text
+        out.append(zh)
+    return ''.join(out)
+
 
 PROTECTED = {
     'I': ('第一級（瀕臨絕種）', 'Class I (endangered)'), 'II': ('第二級（珍貴稀有）', 'Class II (rare and valuable)'),

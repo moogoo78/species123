@@ -2,7 +2,7 @@
 
     python scripts/import_taicol.py fetch     # page api.taicol.tw/v2/taxon into data/raw/ (resumable)
     python scripts/import_taicol.py wikidata  # refresh data/raw/wikidata.json (GBIF / iNaturalist / eBird / xeno-canto ids)
-    python scripts/import_taicol.py build     # build data/species123.sqlite from data/raw/
+    python scripts/import_taicol.py build     # build data/species123.sqlite from data/raw/ (+ data/raw/wcvp.json, see import_wcvp.py)
     python scripts/import_taicol.py           # fetch + build
 
 The API caps pages at 300 rows, so a full fetch is ~460 requests. Pages already
@@ -78,6 +78,10 @@ CREATE TABLE taxon (
 CREATE TABLE taxon_rank_count (taxon_id TEXT, rank TEXT, n INTEGER, PRIMARY KEY (taxon_id, rank));
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE xref (taxon_id TEXT, source TEXT, ext_id TEXT, via TEXT, PRIMARY KEY (taxon_id, source, ext_id));
+CREATE TABLE wcvp (taxon_id TEXT PRIMARY KEY, plant_name_id TEXT, match_type TEXT, name TEXT, authors TEXT,
+                   powo_id TEXT, ipni_id TEXT, lifeform TEXT, climate TEXT, range TEXT);
+CREATE TABLE wcvp_dist (taxon_id TEXT, area_code TEXT, status TEXT, PRIMARY KEY (taxon_id, area_code)) WITHOUT ROWID;
+CREATE TABLE wgsrpd_area (area_code TEXT PRIMARY KEY, name TEXT);
 """
 
 INDEXES = """
@@ -316,10 +320,18 @@ def build():
     wd = json.loads((RAW / 'wikidata.json').read_text()) if (RAW / 'wikidata.json').exists() else {'rows': []}
     # rows from before name matching have no via: they all came from the TaiCOL id
     con.executemany('INSERT INTO xref VALUES (?,?,?,?)', ((*r[:3], r[3] if len(r) > 3 else 'taicol_id') for r in wd['rows'] if r[0] in rows))
+    wcvp = json.loads((RAW / 'wcvp.json').read_text()) if (RAW / 'wcvp.json').exists() else {'rows': []}
+    wcvp_rows = [w for w in wcvp['rows'] if w['taxon_id'] in rows]
+    con.executemany('INSERT INTO wcvp VALUES (?,?,?,?,?,?,?,?,?,?)', (
+        (w['taxon_id'], w['plant_name_id'], w['match_type'], w['name'], w['authors'], w['powo_id'] or None,
+         w['ipni_id'] or None, w['lifeform'] or None, w['climate'] or None, w['range'] or None) for w in wcvp_rows))
+    con.executemany('INSERT INTO wcvp_dist VALUES (?,?,?)', ((w['taxon_id'], code, st) for w in wcvp_rows for code, _, st in w['dist']))
+    con.executemany('INSERT INTO wgsrpd_area VALUES (?,?)', {(code, name) for w in wcvp_rows for code, name, _ in w['dist']})
     fetched = (RAW / 'fetched_at.txt').read_text().strip() if (RAW / 'fetched_at.txt').exists() else ''
     con.executemany('INSERT INTO meta VALUES (?,?)', [
         ('source', API), ('fetched_at', fetched), ('built_at', datetime.now(timezone.utc).isoformat(timespec='seconds')),
         ('taxa', str(len(rows))), ('wikidata_fetched_at', wd.get('fetched_at', '')),
+        ('wcvp_built_at', wcvp.get('built_at', '')),
     ])
     con.executescript(INDEXES)
     con.commit()

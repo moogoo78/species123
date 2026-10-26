@@ -331,3 +331,29 @@ main { flex: 1; }
 .results-table tr.group-row { background: var(--theme-bg-2); cursor: default; }
 .results-table tr.group-row th { font-size: 13px; font-weight: 600; color: var(--theme-tx-1); }
 .unmatched { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* WCVP box: life form, climate, range and the world map (WGSRPD level 3, see app.js) */
+.wcvp-box { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border: 1px solid var(--theme-bd-1); border-left: 4px solid var(--theme-success); border-radius: 12px; background: var(--theme-bg-2); }
+.wcvp-box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.wcvp-as { font-size: 14px; color: var(--theme-tx-1); }
+.wcvp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 0; }
+.wcvp-facts div { padding: 10px 12px; border-radius: 8px; background: var(--theme-bg-1); }
+.wcvp-facts dt { font-family: var(--font-sans-en); font-size: 11px; letter-spacing: .04em; color: var(--theme-tx-3); }
+.wcvp-facts dd { margin: 2px 0 0; font-weight: 700; color: var(--theme-tx-1); }
+.range { display: flex; flex-direction: column; gap: 10px; }
+.range-map { aspect-ratio: 2 / 1; border-radius: 8px; background: var(--theme-bg-1); overflow: hidden; }
+.range-map svg { display: block; width: 100%; height: 100%; }
+.range-map [data-code] { fill: var(--theme-bg-3); stroke: var(--theme-bg-1); stroke-width: .3; vector-effect: non-scaling-stroke; }
+.range-map .dot { fill: none; stroke: none; }
+.range-map .is-taiwan { stroke: var(--theme-tx-1); stroke-width: 1.2; }
+[data-status="native"] { --range: var(--theme-success); }
+[data-status="introduced"] { --range: var(--theme-warning); }
+[data-status="extinct"] { --range: var(--theme-tx-3); }
+[data-status="doubtful"] { --range: var(--theme-info); }
+.range-map [data-status] { fill: var(--range); }
+.range-map .dot[data-status] { fill: var(--range); stroke: var(--theme-bg-1); stroke-width: .8; }
+.range-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; }
+.range-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.range-legend .swatch { width: 12px; height: 12px; border-radius: 3px; background: var(--range); }
+.range-list summary { cursor: pointer; font-size: 14px; color: var(--theme-tx-1); }
+.range-list p { margin-top: 8px; font-size: 14px; line-height: 1.7; }

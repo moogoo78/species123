@@ -50,6 +50,17 @@ def xrefs(taxon_id):
     return out
 
 
+def wcvp(taxon_id):
+    """WCVP facts for a vascular plant (scripts/import_wcvp.py), or None."""
+    return one('SELECT * FROM wcvp WHERE taxon_id = ?', (taxon_id,))
+
+
+def wcvp_dist(taxon_id):
+    """WGSRPD level-3 regions [(area_code, name, status)], status native / introduced / extinct / doubtful."""
+    return rows('SELECT d.area_code, a.name, d.status FROM wcvp_dist d JOIN wgsrpd_area a USING (area_code) '
+                'WHERE d.taxon_id = ? ORDER BY a.name', (taxon_id,))
+
+
 def taxa(ids):
     if not ids:
         return []
