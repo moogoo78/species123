@@ -24,6 +24,7 @@ def get_cache():
     """Writable side database for API responses (literature, photos, GBIF matches)."""
     if 'cache' not in g:
         con = sqlite3.connect(CACHE_PATH, timeout=5)
+        con.execute('PRAGMA journal_mode=WAL')  # concurrent requests read while one writes
         con.execute('CREATE TABLE IF NOT EXISTS ref_cache (name_id INTEGER PRIMARY KEY, body TEXT, fetched_at REAL)')
         con.execute('CREATE TABLE IF NOT EXISTS photo_cache (name TEXT PRIMARY KEY, body TEXT, fetched_at REAL)')
         con.execute('CREATE TABLE IF NOT EXISTS gbif_cache (name TEXT PRIMARY KEY, body TEXT, fetched_at REAL)')

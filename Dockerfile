@@ -13,4 +13,6 @@ COPY app app
 COPY scripts scripts
 COPY --from=assets /build/node_modules/musubii/dist/musubii.css /code/vendor/musubii.css
 EXPOSE 8000
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "app:create_app()"]
+# threads, not more processes: a cold species page mostly waits on iNaturalist / GBIF / TaiCOL / Wikipedia,
+# so one slow page must not hold up the others (and the host has 1 GB of RAM)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--worker-class", "gthread", "--workers", "2", "--threads", "8", "app:create_app()"]
