@@ -108,7 +108,6 @@ STRINGS = {
     'revised': ('TaiCOL 更新於 {d}', 'Revised on TaiCOL {d}'),
     'on_this_page': ('本頁內容', 'On this page'),
     'overview': ('概要', 'Overview'),
-    'names': ('名稱', 'Names'),
     'primary_name': ('中文名', 'Chinese name'),
     'alt_name': ('別名', 'Alternative name'),
     'fact_rank': ('階層', 'Rank'),

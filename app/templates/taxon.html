@@ -43,6 +43,12 @@
 {% if not vern %}<p class="muted" style="font-size:14px">{{ t('none_recorded') }}</p>{% endif %}
 {% endmacro %}
 
+{% macro common_names() %}
+<div class="side-list">
+  <h3 class="eyebrow">{{ t('common_names') }}</h3>{{ vern_list() }}
+</div>
+{% endmacro %}
+
 {% macro refs_list(style='') %}
 {% if refs is none %}<p class="muted" style="font-size:13px">{{ t('refs_unavailable') }}</p>
 {% elif not refs %}<p class="muted" style="font-size:13px">{{ t('none_recorded') }}</p>
@@ -145,9 +151,7 @@
     <section id="taxonomy" class="block" data-tab-panel="taxonomy">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
-      <div class="side-list">
-        <h3 class="eyebrow">{{ t('common_names') }}</h3>{{ vern_list() }}
-      </div>
+      {{ common_names() }}
       {{ ext_links() }}
     </section>
     <section id="biology" class="block" data-tab-panel="biology">
@@ -214,7 +218,7 @@
 <div class="wrap page-body article">
   <nav aria-label="{{ t('on_this_page') }}">
     <span class="eyebrow" style="padding:0 8px 6px">{{ t('on_this_page') }}</span>
-    {% for id, key in [('m-overview', 'overview'), ('m-taxonomy', 'classification'), ('m-names', 'names'), ('m-refs', 'literature')] %}
+    {% for id, key in [('m-overview', 'overview'), ('m-taxonomy', 'classification'), ('m-refs', 'literature')] %}
     <a class="hover-bg" href="#{{ id }}"># {{ t(key) }}</a>
     {% endfor %}
   </nav>
@@ -227,11 +231,9 @@
     <div id="m-taxonomy" class="block">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
+      {{ common_names() }}
       {{ ext_links() }}
       {{ children_list() }}
-    </div>
-    <div id="m-names" class="side-list">
-      <h2>{{ t('common_names') }}</h2>{{ vern_list() }}
     </div>
     <div id="m-refs" class="block">
       <h2>{{ t('literature') }}</h2>
