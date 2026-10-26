@@ -22,8 +22,10 @@ DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note',
 DIST_STATUS = ('native', 'introduced', 'extinct', 'doubtful')  # WCVP distribution, in legend order
 VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
 # external links in display order. Ids come from Wikidata (matched on the TaiCOL id) or, for GBIF and
-# iNaturalist only, from an exact accepted-name match; gbif_legacy only when there is no post-2026 GBIF id
+# iNaturalist only, from an exact accepted-name match; gbif_legacy only when there is no post-2026 GBIF id.
+# TBIA (Taiwan Biodiversity Information Alliance) occurrence search takes the TaiCOL id itself.
 EXT_LINKS = [
+    ('tbia', 'TBIA', 'https://tbiadata.tw/{site_lang}/search/occurrence?record_type=occ&taxonID={}&page=1&from=search&limit=10'),
     ('gbif', 'GBIF', 'https://www.gbif.org/taxon/{}'),
     ('gbif_legacy', 'GBIF', 'https://www.gbif.org/species/{}'),
     ('inaturalist', 'iNaturalist', 'https://www.inaturalist.org/taxa/{}'),
@@ -251,10 +253,12 @@ def create_app():
                 x['gbif_legacy'] = [(str(key), 'name')]
         if inat_id and 'inaturalist' not in x:
             x['inaturalist'] = [(str(inat_id), 'name')]  # the photos' name match
+        x['tbia'] = [(t['taxon_id'], 'taicol_id')]
         for src in ('powo', 'ipni'):
             if w and w[src + '_id']:
                 x[src] = [(w[src + '_id'], 'wcvp')]
-        return [{'label': label, 'id': i, 'url': url.format(i), 'via': via}
+        site_lang = 'zh-hant' if g.lang == 'zh' else 'en-us'
+        return [{'label': label, 'id': i, 'url': url.format(i, site_lang=site_lang), 'via': via}
                 for src, label, url in EXT_LINKS for i, via in x.get(src, [])]
 
     def description(t, xrefs, lin):

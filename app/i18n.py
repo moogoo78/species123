@@ -124,9 +124,9 @@ STRINGS = {
     'via_name': ('學名比對', 'Name match'),
     'via_wikidata_name': ('Wikidata（學名比對）', 'Wikidata (name match)'),
     'via_wcvp': ('WCVP', 'WCVP'),
-    'via_note': ('連結依據：Wikidata（以 TaiCOL ID 對應）、學名比對（與 TaiCOL 有效名完全相同；Wikidata 項目另須階層與科相同），'
+    'via_note': ('連結依據：TaiCOL ID（TBIA）、Wikidata（以 TaiCOL ID 對應）、學名比對（與 TaiCOL 有效名完全相同；Wikidata 項目另須階層與科相同），'
                  '或 WCVP（POWO、IPNI，維管束植物）',
-                 'Linked via Wikidata (matched on the TaiCOL ID), a name match (identical to the TaiCOL accepted name; '
+                 'Linked via the TaiCOL ID (TBIA), Wikidata (matched on the TaiCOL ID), a name match (identical to the TaiCOL accepted name; '
                  'for Wikidata items, also the same rank and family), or WCVP (POWO and IPNI, vascular plants)'),
     'key_facts': ('重點資訊', 'Key facts'),
     'description': ('描述', 'Description'),
