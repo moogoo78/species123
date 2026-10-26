@@ -163,7 +163,7 @@
 {% endmacro %}
 
 {% block main %}
-{% set tabs = [('overview', 'overview')] + ([('photos', 'photos')] if pics.photos else []) + ([('specimens', 'specimens')] if specimens.total else []) + [('taxonomy', 'classification'), ('biology', 'biology'), ('refs', 'literature')] %}
+{% set tabs = [('overview', 'overview')] + ([('photos', 'photos')] if pics.photos else []) + [('taxonomy', 'classification'), ('biology', 'biology'), ('refs', 'literature')] + ([('specimens', 'specimens')] if specimens.total else []) %}
 <section class="profile-head{{ ' is-guide' if layout == 'guide' }}">
   <div class="wrap">
     <div class="profile-top">
@@ -228,12 +228,6 @@
       {{ photos_credit() }}
     </section>
     {% endif %}
-    {% if specimens.total %}
-    <section id="specimens" class="block" data-tab-panel="specimens">
-      <h2>{{ t('specimens') }}</h2>
-      {{ specimen_gallery('tab') }}
-    </section>
-    {% endif %}
     <section id="taxonomy" class="block" data-tab-panel="taxonomy">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
@@ -254,6 +248,12 @@
       <div style="display:flex;flex-direction:column;gap:10px">{{ refs_list('font-size:14px;line-height:1.75;color:var(--theme-tx-2)') }}</div>
       {% if tx.updated_at %}<span class="muted" style="font-size:12px">{{ t('revised', d=tx.updated_at) }}</span>{% endif %}
     </section>
+    {% if specimens.total %}
+    <section id="specimens" class="block" data-tab-panel="specimens">
+      <h2>{{ t('specimens') }}</h2>
+      {{ specimen_gallery('tab') }}
+    </section>
+    {% endif %}
   </div>
 </div>
 
@@ -290,16 +290,16 @@
       {{ wcvp_box() }}
     </div>
     {{ children_list() }}
+    <div class="block">
+      <h2>{{ t('literature') }}</h2>
+      {{ refs_list('font-size:14px;color:var(--theme-tx-2)') }}
+    </div>
     {% if specimens.total %}
     <div class="block">
       <h2>{{ t('specimens') }}</h2>
       {{ specimen_gallery() }}
     </div>
     {% endif %}
-    <div class="block">
-      <h2>{{ t('literature') }}</h2>
-      {{ refs_list('font-size:14px;color:var(--theme-tx-2)') }}
-    </div>
   </section>
   <aside>
     <div class="side-list">
@@ -315,7 +315,7 @@
 <div class="wrap page-body article">
   <nav aria-label="{{ t('on_this_page') }}">
     <span class="eyebrow" style="padding:0 8px 6px">{{ t('on_this_page') }}</span>
-    {% for id, key in [('m-overview', 'overview')] + ([('m-wcvp', 'wcvp_nav')] if wcvp else []) + ([('m-specimens', 'specimens')] if specimens.total else []) + [('m-taxonomy', 'classification'), ('m-refs', 'literature')] %}
+    {% for id, key in [('m-overview', 'overview')] + ([('m-wcvp', 'wcvp_nav')] if wcvp else []) + [('m-taxonomy', 'classification'), ('m-refs', 'literature')] + ([('m-specimens', 'specimens')] if specimens.total else []) %}
     <a class="hover-bg" href="#{{ id }}"># {{ t(key) }}</a>
     {% endfor %}
   </nav>
@@ -327,12 +327,6 @@
       {{ description() }}
     </div>
     {% if wcvp %}<div id="m-wcvp" class="block">{{ wcvp_box() }}</div>{% endif %}
-    {% if specimens.total %}
-    <div id="m-specimens" class="block">
-      <h2>{{ t('specimens') }}</h2>
-      {{ specimen_gallery() }}
-    </div>
-    {% endif %}
     <div id="m-taxonomy" class="block">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
@@ -345,6 +339,12 @@
       <div style="display:flex;flex-direction:column;gap:10px">{{ refs_list('font-size:14px;line-height:1.75;color:var(--theme-tx-2)') }}</div>
       {% if tx.updated_at %}<span class="muted" style="font-size:12px">{{ t('revised', d=tx.updated_at) }}</span>{% endif %}
     </div>
+    {% if specimens.total %}
+    <div id="m-specimens" class="block">
+      <h2>{{ t('specimens') }}</h2>
+      {{ specimen_gallery() }}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endif %}

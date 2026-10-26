@@ -60,7 +60,7 @@ docker compose -f compose.yml -f compose.traefik.yml up -d --build
 | `/gallery`、`/gallery/<key>?show=taiwan\|endemic\|native\|alien\|all` | 圖鑑：依科排列的物種照片卡片，預設只列在臺灣的物種；圖鑑清單在 `app/galleries.py`，加一行即新增一本 |
 | `/search?q=&kingdom=&rank=&endemic=&alien=&redlist=&protected=&under=&sort=&page=` | 搜尋與分面篩選；`under=<taxon_id>` 限定某分類群之下 |
 | `/taxonomy?node=<taxon_id>` | 分類樹（下層延遲載入：`/taxonomy/children/<taxon_id>`） |
-| `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#photos` `#specimens` `#taxonomy` `#biology` `#refs`） |
+| `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#photos` `#taxonomy` `#biology` `#refs` `#specimens`） |
 | `/names`（POST `text`，`format=csv` 下載） | 學名擷取：貼上文字，找出學名並比對 TaiCOL 有效名，依科整理成名錄 |
 | `/wcvp-taiwan?show=differs\|wcvp_absent&format=csv` | WCVP 臺灣狀態比對：TaiCOL 原生／外來與 WCVP 臺灣（TAI）分布紀錄不一致的種與種下分類群（栽培植物沒有 WCVP 紀錄不算不一致），可下載 CSV |
 | `/compare?ids=a,b,c,d` | 最多 4 個分類群並列比較 |
