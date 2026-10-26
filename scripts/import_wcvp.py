@@ -3,8 +3,8 @@
     python scripts/import_wcvp.py [wcvp dir]    # default data/wcvp/
 
 The directory holds the WCVP download (wcvp_names.csv, wcvp_distribution.csv; https://sftp.kew.org/pub/data-repositories/WCVP/)
-and taicol-wcvp-mapping.csv, which maps TaiCOL accepted vascular plants to WCVP names (columns taicol_taxon_id,
-match_type, wcvp_accepted_id, …). Taxa whose match is ambiguous, missing, or only an Unplaced WCVP name are left out.
+and taicol-wcvp-mapping.csv from match_wcvp.py, which maps TaiCOL accepted vascular plants to WCVP names.
+Taxa whose match is ambiguous, missing, or only an Unplaced WCVP name are left out.
 Per taxon: the WCVP accepted name it resolves to, POWO / IPNI ids, life form, climate, the range summary, and
 the WGSRPD level-3 distribution. import_taicol.py build loads the result into the wcvp / wcvp_dist tables.
 """

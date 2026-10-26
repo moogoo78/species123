@@ -11,13 +11,13 @@
 - SQLite 唯讀資料庫 `data/species123.sqlite`，由匯入程式從 TaiCOL API 建立
 - 外部連結（GBIF、iNaturalist、eBird、xeno-canto、Wikidata）來自 [Wikidata](https://www.wikidata.org/)：以 TaiCOL ID（P12218）一次查詢取得；沒有 TaiCOL ID 的屬以下分類群，改以學名（P225）找 Wikidata 項目，須學名、階層（P105）與所屬科皆相同、項目本身沒有 TaiCOL ID，且只有一個符合，存於 `data/raw/wikidata.json`，`import_taicol.py wikidata` 可單獨更新。Wikidata 沒有的 GBIF、iNaturalist 連結，於物種頁以學名比對補上（須與 TaiCOL 有效名完全相同且同界），結果快取於 `data/cache.sqlite`；每個連結都標示依據（Wikidata／學名比對）
 - 物種描述取自[維基百科](https://www.wikipedia.org/)（CC BY-SA 4.0）：經由該物種的 Wikidata 項目找到中文（臺灣正體）或英文條目，依頁面語言優先，取條目摘要，於物種頁瀏覽時抓取並快取 30 天；亞種、變種、品型沒有自己的條目時，改用所屬物種的條目並註明；沒有 Wikidata 項目的物種不顯示描述
-- 維管束植物的生活型、氣候帶、全球分布範圍、分布地圖與 POWO／IPNI 連結取自 [WCVP 世界維管束植物名錄](https://powo.science.kew.org/about-wcvp)（Kew）：`scripts/import_wcvp.py` 讀 `data/wcvp/`（WCVP 下載的 `wcvp_names.csv`、`wcvp_distribution.csv`，加上 TaiCOL→WCVP 對應表 `taicol-wcvp-mapping.csv`），產生 `data/raw/wcvp.json`，`build` 時載入；對應到 WCVP 異名者採其接受名並於物種頁註明。地圖底圖 `app/static/wgsrpd-l3.svg` 由 `scripts/build_wgsrpd_svg.py` 從 [WGSRPD](https://github.com/tdwg/wgsrpd) 第三級 GeoJSON 產生
+- 維管束植物的生活型、氣候帶、全球分布範圍、分布地圖與 POWO／IPNI 連結取自 [WCVP 世界維管束植物名錄](https://powo.science.kew.org/about-wcvp)（Kew）：`scripts/import_wcvp.py` 讀 `data/wcvp/`（WCVP 下載的 `wcvp_names.csv`、`wcvp_distribution.csv`，加上 `scripts/match_wcvp.py` 以 [gnparser](https://github.com/gnames/gnparser) 標準化學名後產生的 TaiCOL→WCVP 對應表 `taicol-wcvp-mapping.csv`），產生 `data/raw/wcvp.json`，`build` 時載入；對應到 WCVP 異名者採其接受名並於物種頁註明。地圖底圖 `app/static/wgsrpd-l3.svg` 由 `scripts/build_wgsrpd_svg.py` 從 [WGSRPD](https://github.com/tdwg/wgsrpd) 第三級 GeoJSON 產生
 - 文獻在物種頁即時向 TaiCOL 取得；照片取自 iNaturalist（僅 CC 授權照片，附作者標示）。兩者都快取於 `data/cache.sqlite`（30 天）
 - MUSUBii 9.4.0 CSS（Docker build 時由 npm 取得），少量原生 JS（深淺色、比較清單、分類樹展開）
 
 ```
 app/            Flask app (routes in __init__.py, SQL in queries.py, zh/en strings in i18n.py)
-scripts/        import_taicol.py, import_wcvp.py, build_wgsrpd_svg.py
+scripts/        import_taicol.py, match_wcvp.py, import_wcvp.py, build_wgsrpd_svg.py
 data/           species123.sqlite, cache.sqlite, raw/ (API pages, wcvp.json), wcvp/ (WCVP files) — not in git
 ```
 
@@ -29,7 +29,14 @@ docker compose build
 # 1. 匯入 TaiCOL（約 460 次 API 請求、20–30 分鐘；中斷後重跑會從斷點繼續）
 docker compose run --rm app python scripts/import_taicol.py          # fetch + build
 docker compose run --rm app python scripts/import_taicol.py build    # 只用 data/raw/ 重建資料庫
-docker compose run --rm app python scripts/import_wcvp.py            # WCVP：data/wcvp/ → data/raw/wcvp.json，之後再 build
+
+# 1b. WCVP（維管束植物）：WCVP 下載檔放 data/wcvp/，對應學名後匯入，再 build
+docker compose run --rm app python scripts/match_wcvp.py names       # 待解析的學名清單
+docker run --rm -i gnames/gognparser:latest -f compact -C -j 8 < data/wcvp/wcvp-names.txt > data/wcvp/wcvp-parsed.jsonl
+docker run --rm -i gnames/gognparser:latest -f compact -C -j 8 < data/wcvp/taicol-names.txt > data/wcvp/taicol-parsed.jsonl
+docker compose run --rm app python scripts/match_wcvp.py match       # → data/wcvp/taicol-wcvp-mapping.csv
+docker compose run --rm app python scripts/import_wcvp.py            # → data/raw/wcvp.json
+docker compose run --rm app python scripts/import_taicol.py build
 
 # 2. 開發（flask --debug，原始碼即時重載）
 docker compose up
