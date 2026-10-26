@@ -55,8 +55,9 @@
 {% if links %}
 <h3 class="eyebrow">{{ t('external_links') }}</h3>
 <div class="chips" style="justify-content:flex-start">
-  {% for l in links %}<a class="button is-outline is-round is-xs" href="{{ l.url }}" rel="noopener" target="_blank">{{ icon('external-link', '12px') }}{{ l.label }}</a>{% endfor %}
+  {% for l in links %}<a class="button is-outline is-round is-xs" href="{{ l.url }}" rel="noopener" target="_blank" title="{{ t('via_' + l.via) }}">{{ icon('external-link', '12px') }}{{ l.label }}<span class="muted">· {{ t('via_' + l.via) }}</span></a>{% endfor %}
 </div>
+<p class="muted" style="font-size:12px">{{ t('via_note') }}</p>
 {% endif %}
 {% endmacro %}
 
@@ -179,7 +180,8 @@
       <h2 class="eyebrow">{{ t('identifiers') }}</h2>
       <div class="kv"><span>TaiCOL taxon</span><a class="mono" href="https://taicol.tw/zh-hant/taxon/{{ tx.taxon_id }}" rel="noopener">{{ tx.taxon_id }}</a></div>
       {% if tx.name_id %}<div class="kv"><span>TaiCOL name</span><span class="mono">{{ tx.name_id }}</span></div>{% endif %}
-      {% for l in links %}<div class="kv"><span>{{ l.label }}</span><a class="mono" href="{{ l.url }}" rel="noopener">{{ l.id }}</a></div>{% endfor %}
+      {% for l in links %}<div class="kv"><span>{{ l.label }} <span class="muted" style="font-size:11px">{{ t('via_' + l.via) }}</span></span><a class="mono" href="{{ l.url }}" rel="noopener">{{ l.id }}</a></div>{% endfor %}
+      {% if links %}<p class="muted" style="font-size:11px">{{ t('via_note') }}</p>{% endif %}
     </div>
   </aside>
   <section>

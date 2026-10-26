@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from flask import Flask, Response, abort, g, render_template, request, send_from_directory
 from markupsafe import Markup, escape
 
-from . import extract, groups, i18n, photos, queries, taicol
+from . import extract, gbif, groups, i18n, photos, queries, taicol
 from .db import close_db, get_db
 
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -18,7 +18,8 @@ LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the defa
 # facts shown under the field guide's distribution tab rather than the overview
 DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note', 'fact_habitat', 'fact_fossil'}
 VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
-# external links from Wikidata cross-references, in display order; gbif_legacy only when no post-2026 GBIF id
+# external links in display order. Ids come from Wikidata (matched on the TaiCOL id) or, for GBIF and
+# iNaturalist only, from an exact accepted-name match; gbif_legacy only when there is no post-2026 GBIF id
 EXT_LINKS = [
     ('gbif', 'GBIF', 'https://www.gbif.org/taxon/{}'),
     ('gbif_legacy', 'GBIF', 'https://www.gbif.org/species/{}'),
@@ -202,12 +203,18 @@ def create_app():
         return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
 
     def ext_links(t, inat_id):
-        x = queries.xrefs(t['taxon_id'])
+        x = {src: [(i, 'taicol_id' if src == 'wikidata' else 'wikidata') for i in ids]
+             for src, ids in queries.xrefs(t['taxon_id']).items()}
         if 'gbif' in x:
             x.pop('gbif_legacy', None)
+        elif 'gbif_legacy' not in x:
+            key = gbif.taxon_key(t['simple_name'], t['kingdom'], t['rank'])
+            if key:
+                x['gbif_legacy'] = [(str(key), 'name')]
         if inat_id and 'inaturalist' not in x:
-            x['inaturalist'] = [str(inat_id)]  # matched by name for the photos
-        return [{'label': label, 'id': i, 'url': url.format(i)} for src, label, url in EXT_LINKS for i in x.get(src, [])]
+            x['inaturalist'] = [(str(inat_id), 'name')]  # the photos' name match
+        return [{'label': label, 'id': i, 'url': url.format(i), 'via': via}
+                for src, label, url in EXT_LINKS for i, via in x.get(src, [])]
 
     @app.route('/taxon/<taxon_id>')
     def taxon(taxon_id):
