@@ -8,5 +8,6 @@ services:
       - "8000:8000"
     environment:
       - SPECIES123_DATA=/code/data
+      - SPECIES123_GA_ID=${SPECIES123_GA_ID:-}  # Google Analytics, set in .env (production only)
     volumes:
       - ./data:/code/data

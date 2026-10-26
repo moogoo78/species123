@@ -50,6 +50,8 @@ docker compose -f compose.yml up -d
 docker compose -f compose.yml -f compose.traefik.yml up -d --build
 ```
 
+Google Analytics：在主機的 `.env`（不進 git）設定 `SPECIES123_GA_ID=G-XXXXXXXXXX` 後重啟；未設定則不載入追蹤碼。
+
 更新資料：刪除 `data/raw/` 後重新執行匯入；新資料庫建好後才會原子替換舊檔，網站不需停機。
 
 ## 頁面

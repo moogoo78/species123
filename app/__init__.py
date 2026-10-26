@@ -21,6 +21,7 @@ LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the defa
 DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note', 'fact_habitat', 'fact_fossil'}
 DIST_STATUS = ('native', 'introduced', 'extinct', 'doubtful')  # WCVP distribution, in legend order
 VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
+GA_ID = os.environ.get('SPECIES123_GA_ID', '').strip()  # Google Analytics 4 measurement id (G-XXXXXXX); unset = no tracking
 # external links in display order. Ids come from Wikidata (matched on the TaiCOL id) or, for GBIF and
 # iNaturalist only, from an exact accepted-name match; gbif_legacy only when there is no post-2026 GBIF id.
 # TBIA (Taiwan Biodiversity Information Alliance) occurrence search takes the TaiCOL id itself.
@@ -70,7 +71,7 @@ def create_app():
         return {
             'lang': g.lang, 't': g.t, 'code': g.code, 'rank_label': g.rank, 'tables': i18n,
             'badges': badges, 'url_with': url_with, 'group_label': lambda k: groups.label(k, g.lang), 'lang_url': url_with(lang='en' if g.lang == 'zh' else 'zh'),
-            'data_meta': data_meta(),
+            'data_meta': data_meta(), 'ga_id': GA_ID,
         }
 
     app.add_template_filter(italic)
