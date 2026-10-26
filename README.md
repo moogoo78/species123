@@ -35,6 +35,9 @@ docker compose up
 
 # 正式環境（gunicorn，不掛載原始碼）
 docker compose -f compose.yml up -d
+
+# 部署（linode：已有 Traefik，自動 HTTPS，https://species123.naturedb.org）
+docker compose -f compose.yml -f compose.traefik.yml up -d --build
 ```
 
 更新資料：刪除 `data/raw/` 後重新執行匯入；新資料庫建好後才會原子替換舊檔，網站不需停機。

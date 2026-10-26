@@ -1,0 +1,25 @@
+# Production override for a host that already runs Traefik (the galaxy-catalog stack on linode).
+# Traefik reaches the app over its shared network and terminates TLS, so no host port is published.
+#
+#   docker compose -f compose.yml -f compose.traefik.yml up -d --build
+#
+# data/species123.sqlite is not in git: build it on the host (scripts/import_taicol.py) or copy it over.
+services:
+  app:
+    ports: !reset []
+    restart: unless-stopped
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=galaxy-catalog_default"
+      - "traefik.http.routers.species123.rule=Host(`species123.naturedb.org`)"
+      - "traefik.http.routers.species123.entrypoints=websecure"
+      - "traefik.http.routers.species123.tls.certresolver=myresolver"
+      - "traefik.http.services.species123.loadbalancer.server.port=8000"
+
+networks:
+  traefik:
+    name: galaxy-catalog_default
+    external: true
