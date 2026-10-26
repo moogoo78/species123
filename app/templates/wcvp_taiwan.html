@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import sci %}
+{% block title %}{{ t('nav_wcvp_taiwan') }} · {{ t('site_name') }}{% endblock %}
+{% block main %}
+<div class="wrap page-body" style="display:flex;flex-direction:column;gap:16px">
+  <div class="title-row" style="margin-bottom:0">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h1>{{ t('nav_wcvp_taiwan') }}</h1>
+      <p style="font-size:14px">{{ t('wct_lead') }}</p>
+      <p class="muted" style="font-size:13px">{{ t('wct_caveat') }}</p>
+    </div>
+  </div>
+  <div class="results-bar">
+    <div class="chips is-start">
+      {% for s in counts %}
+      <a href="{{ url_with(show=None if loop.first else s, format=None) }}" class="button is-round is-xs {{ 'is-plain is-primary' if s == show else 'is-melt' }}"{% if s == show %} aria-current="true"{% endif %}>{{ t('wct_' + s) }} <span class="n">{{ counts[s] }}</span></a>
+      {% endfor %}
+    </div>
+    {% if rows %}<a class="button is-outline is-round is-sm" href="{{ url_with(format='csv') }}">{{ t('names_csv') }}</a>{% endif %}
+  </div>
+  {% if rows %}
+  <div class="table-frame">
+    <table class="table is-line is-middle results-table no-select">
+      <thead><tr>
+        <th>{{ t('col_name') }}</th>
+        <th>{{ t('col_common') }}</th>
+        <th>{{ t('col_taicol_status') }}</th>
+        <th>{{ t('col_wcvp_taiwan') }}</th>
+        <th>{{ t('col_wcvp_name') }}</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        {% if loop.first or r.family != loop.previtem.family %}
+        <tr class="group-row"><th colspan="5">{{ r.family_c or '' }} <span class="en">{{ r.family }}</span></th></tr>
+        {% endif %}
+        <tr>
+          <td><a class="sci" href="{{ url_for('taxon', taxon_id=r.taxon_id) }}">{{ sci(r) }}</a></td>
+          <td>{{ r.common_name_c or '' }}</td>
+          <td class="nowrap">{{ code(tables.ALIEN, r.alien_type) }}</td>
+          <td class="nowrap">{{ tai_label(r) }}</td>
+          <td class="muted" style="font-size:13px">{% if r.wcvp_name != r.simple_name %}<i class="en">{{ r.wcvp_name }}</i> <span class="en">{{ r.wcvp_authors }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><p class="title">{{ t('wct_none') }}</p></div>
+  {% endif %}
+  <p class="muted" style="font-size:12px">{{ t('wcvp_credit') }}</p>
+</div>
+{% endblock %}

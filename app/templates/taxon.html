@@ -98,6 +98,9 @@
     {% for f in wcvp_facts %}<div><dt>{{ f.label }}</dt><dd{% if f.key == 'fact_range' %} lang="en"{% endif %}>{{ f.value }}</dd></div>{% endfor %}
   </dl>
   {% endif %}
+  {% if wcvp_check in ('differs', 'wcvp_absent') %}
+  <p class="wcvp-check">{{ icon('alert-triangle', '14px') }}<span>{{ t('wct_note_' + wcvp_check, s=code(tables.ALIEN, tx.alien_type)) }} · <a href="{{ url_for('wcvp_taiwan', show=wcvp_check) }}">{{ t('wct_see_all') }}</a></span></p>
+  {% endif %}
   {% if dist %}
   <div class="range">
     <span class="ranklabel">{{ t('world_dist') }}</span>
@@ -113,6 +116,32 @@
   <p class="muted" style="font-size:12px">{{ t('wcvp_credit') }}</p>
 </section>
 {% endif %}
+{%- endmacro %}
+
+{# TBIA natural history specimens with images; load as in photo() #}
+{% macro specimen_gallery(load='lazy') -%}
+{% set sp = specimens %}
+<p class="muted" style="font-size:14px">{{ t('specimens_summary', total='{:,}'.format(sp.total), img='{:,}'.format(sp.with_image)) }}{% if sp.with_image > sp['items']|length %}{{ t('specimens_shown', n=sp['items']|length) }}{% endif %} · <a href="https://tbiadata.tw/{{ tbia_lang }}/search/collection?record_type=col&amp;taxonID={{ tx.taxon_id }}&amp;page=1&amp;from=search&amp;limit=10" rel="noopener" target="_blank">{{ t('specimens_all') }}</a></p>
+<div class="specimen-grid">
+  {% for s in sp['items'] %}
+  <div class="specimen-card">
+    <a class="photo" href="{{ s.image }}" rel="noopener" target="_blank" title="{{ t('specimen_image') }}">
+      {% if load == 'tab' %}<img data-src="{{ s.thumb }}" alt="{{ tx.simple_name }} {{ s.catalog }}" referrerpolicy="no-referrer">
+      {% else %}<img src="{{ s.thumb }}" alt="{{ tx.simple_name }} {{ s.catalog }}" loading="lazy" referrerpolicy="no-referrer">{% endif %}
+    </a>
+    <div class="body">
+      <a class="name" href="https://tbiadata.tw/{{ tbia_lang }}/collection/{{ s.id }}/" rel="noopener" target="_blank">{{ s.catalog or t('specimen_record') }}</a>
+      {% if s.type_status and s.type_status != '一般' %}<span><span class="badge is-plain is-danger is-round is-xs">{{ s.type_status }}</span></span>{% endif %}
+      <span class="muted">{{ s.dataset if s.holder == 'GBIF' and s.dataset else s.holder }}</span>
+      {% if s.collector %}<span>{{ s.collector }}</span>{% endif %}
+      {% if s.date %}<span class="mono">{{ s.date }}</span>{% endif %}
+      {% if s.locality %}<span class="loc">{{ s.locality }}</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if not sp['items'] %}<p class="muted" style="font-size:14px">{{ t('specimens_no_image') }}</p>{% endif %}
+<p class="muted" style="font-size:12px">{{ t('specimens_credit') }}</p>
 {%- endmacro %}
 
 {% macro children_list() %}
@@ -134,7 +163,7 @@
 {% endmacro %}
 
 {% block main %}
-{% set tabs = [('overview', 'overview')] + ([('photos', 'photos')] if pics.photos else []) + [('taxonomy', 'classification'), ('biology', 'biology'), ('refs', 'literature')] %}
+{% set tabs = [('overview', 'overview')] + ([('photos', 'photos')] if pics.photos else []) + ([('specimens', 'specimens')] if specimens.total else []) + [('taxonomy', 'classification'), ('biology', 'biology'), ('refs', 'literature')] %}
 <section class="profile-head{{ ' is-guide' if layout == 'guide' }}">
   <div class="wrap">
     <div class="profile-top">
@@ -170,6 +199,7 @@
         <button type="button" class="button is-plain is-primary is-round is-sm" data-add-compare="{{ tx.taxon_id }}" data-label-in="{{ t('in_compare') }}">{{ icon('columns', '14px') }}<span>{{ t('add_compare') }}</span></button>
         <button type="button" class="button is-outline is-round is-sm" data-copy="{{ cite }}" data-copied="{{ t('copied') }}">{{ icon('copy', '14px') }}{{ t('cite') }}</button>
         <a class="button is-outline is-round is-sm" href="https://taicol.tw/{{ 'zh-hant' if lang == 'zh' else 'en-us' }}/taxon/{{ tx.taxon_id }}" rel="noopener" target="_blank">{{ icon('external-link', '14px') }}{{ t('view_taicol') }}</a>
+        <a class="button is-outline is-round is-sm" href="{{ tbia_url }}" rel="noopener" target="_blank">{{ icon('external-link', '14px') }}{{ t('view_tbia') }}</a>
         {% for key in in_galleries %}<a class="button is-outline is-round is-sm" href="{{ url_for('gallery', key=key) }}{% if tx.rank == 'Species' and not tx.is_in_taiwan %}?show=all{% endif %}">{{ icon('image', '14px') }}{{ t('gallery_view') }}</a>{% endfor %}
       </div>
     </div>
@@ -196,6 +226,12 @@
       <h2>{{ t('photos') }}</h2>
       <div class="photo-grid">{% for p in pics.photos %}{{ photo(p, 'medium', 'is-square', load='tab') }}{% endfor %}</div>
       {{ photos_credit() }}
+    </section>
+    {% endif %}
+    {% if specimens.total %}
+    <section id="specimens" class="block" data-tab-panel="specimens">
+      <h2>{{ t('specimens') }}</h2>
+      {{ specimen_gallery('tab') }}
     </section>
     {% endif %}
     <section id="taxonomy" class="block" data-tab-panel="taxonomy">
@@ -254,6 +290,12 @@
       {{ wcvp_box() }}
     </div>
     {{ children_list() }}
+    {% if specimens.total %}
+    <div class="block">
+      <h2>{{ t('specimens') }}</h2>
+      {{ specimen_gallery() }}
+    </div>
+    {% endif %}
     <div class="block">
       <h2>{{ t('literature') }}</h2>
       {{ refs_list('font-size:14px;color:var(--theme-tx-2)') }}
@@ -273,7 +315,7 @@
 <div class="wrap page-body article">
   <nav aria-label="{{ t('on_this_page') }}">
     <span class="eyebrow" style="padding:0 8px 6px">{{ t('on_this_page') }}</span>
-    {% for id, key in [('m-overview', 'overview')] + ([('m-wcvp', 'wcvp_nav')] if wcvp else []) + [('m-taxonomy', 'classification'), ('m-refs', 'literature')] %}
+    {% for id, key in [('m-overview', 'overview')] + ([('m-wcvp', 'wcvp_nav')] if wcvp else []) + ([('m-specimens', 'specimens')] if specimens.total else []) + [('m-taxonomy', 'classification'), ('m-refs', 'literature')] %}
     <a class="hover-bg" href="#{{ id }}"># {{ t(key) }}</a>
     {% endfor %}
   </nav>
@@ -285,6 +327,12 @@
       {{ description() }}
     </div>
     {% if wcvp %}<div id="m-wcvp" class="block">{{ wcvp_box() }}</div>{% endif %}
+    {% if specimens.total %}
+    <div id="m-specimens" class="block">
+      <h2>{{ t('specimens') }}</h2>
+      {{ specimen_gallery() }}
+    </div>
+    {% endif %}
     <div id="m-taxonomy" class="block">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}

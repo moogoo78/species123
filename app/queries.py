@@ -61,6 +61,17 @@ def wcvp_dist(taxon_id):
                 'WHERE d.taxon_id = ? ORDER BY a.name', (taxon_id,))
 
 
+def wcvp_taiwan():
+    """In-Taiwan species and below with a WCVP distribution, with WCVP's Taiwan status (wcvp_tai, None when absent)."""
+    return rows(f"""SELECT {', '.join('t.' + c.strip() for c in LIST_COLS.split(','))},
+                         w.name AS wcvp_name, w.authors AS wcvp_authors, d.status AS wcvp_tai
+                  FROM taxon t JOIN wcvp w ON w.taxon_id = t.taxon_id
+                  LEFT JOIN wcvp_dist d ON d.taxon_id = t.taxon_id AND d.area_code = 'TAI'
+                  WHERE t.is_in_taiwan = 1 AND t.rank IN ('Species', 'Subspecies', 'Variety', 'Form', 'Hybrid Formula')
+                    AND EXISTS (SELECT 1 FROM wcvp_dist x WHERE x.taxon_id = t.taxon_id)
+                  ORDER BY t.family, t.simple_name""")
+
+
 def taxa(ids):
     if not ids:
         return []

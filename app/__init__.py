@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from flask import Flask, Response, abort, g, render_template, request, send_from_directory
 from markupsafe import Markup, escape
 
-from . import extract, galleries, gbif, groups, i18n, photos, queries, taicol, wikipedia
+from . import extract, galleries, gbif, groups, i18n, photos, queries, taicol, tbia, wcvp, wikipedia
 from .db import close_db, get_db
 
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -233,12 +233,20 @@ def create_app():
         ]
         return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
 
-    def wcvp_facts(w):
+    def wcvp_facts(w, dist):
         """Rows of the species page's WCVP box."""
+        tai = next((d['status'] for d in dist if d['area_code'] == 'TAI'), None)
         rows = [('fact_lifeform', i18n.wcvp_terms(w['lifeform'], g.lang, 'lifeform')),
                 ('fact_climate', i18n.wcvp_terms(w['climate'], g.lang, 'climate')),
+                ('fact_wcvp_taiwan', (g.t('dist_' + tai) if tai else g.t('wcvp_tai_absent')) if dist else ''),
                 ('fact_range', w['range'])]
         return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
+
+    def wcvp_check(t, dist):
+        """How WCVP's Taiwan record compares with TaiCOL's status, for in-Taiwan species and below."""
+        if not dist or not t['is_in_taiwan'] or (t['rank'] != 'Species' and t['rank'] not in INFRA_RANKS):
+            return None
+        return wcvp.taiwan_check(t['alien_type'], next((d['status'] for d in dist if d['area_code'] == 'TAI'), None))
 
     def ext_links(t, xrefs, inat_id, w):
         # the Wikidata item itself: found by TaiCOL id or by name; the ids it holds: from Wikidata, or Wikidata via a name match
@@ -288,9 +296,13 @@ def create_app():
         xrefs = queries.xrefs(t['taxon_id'])
         w = queries.wcvp(t['taxon_id'])
         dist = queries.wcvp_dist(t['taxon_id']) if w else []
+        links = ext_links(t, xrefs, pics.get('inat_id'), w)
         return render_template('taxon.html', tx=t, layout=layout, lineage=lin, crumbs=[x for x in lin if x['rank'] in MAJOR_RANKS],
-                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, xrefs, pics.get('inat_id'), w),
-                               wcvp=w, wcvp_facts=wcvp_facts(w) if w else [], dist=dist, dist_codes={d['area_code']: d['status'] for d in dist},
+                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=links,
+                               tbia_url=next(l['url'] for l in links if l['label'] == 'TBIA'),
+                               specimens=tbia.specimens(t['taxon_id']),
+                               tbia_lang='zh-hant' if g.lang == 'zh' else 'en-us',
+                               wcvp=w, wcvp_facts=wcvp_facts(w, dist) if w else [], wcvp_check=wcvp_check(t, dist), dist=dist, dist_codes={d['area_code']: d['status'] for d in dist},
                                dist_status=[s for s in DIST_STATUS if any(d['status'] == s for d in dist)],
                                refs=taicol.references(t['name_id']), pics=pics,
                                desc=description(t, xrefs, lin), in_galleries=galleries_of(t),
@@ -367,6 +379,30 @@ def create_app():
         return render_template('gallery.html', key=key, title=galleries.title(key, g.lang), roots=queries.taxa(roots),
                                show=show, counts=queries.gallery_counts(roots), families=families, total=len(species),
                                pics=pics)
+
+    @app.route('/wcvp-taiwan')
+    def wcvp_taiwan():
+        """Vascular plants whose TaiCOL native / alien status and WCVP Taiwan record disagree."""
+        by = {c: [] for c in wcvp.CHECKS}
+        for r in queries.wcvp_taiwan():
+            c = wcvp.taiwan_check(r['alien_type'], r['wcvp_tai'])
+            if c in by:
+                by[c].append(r)
+        show = request.args.get('show') if request.args.get('show') in wcvp.CHECKS else wcvp.CHECKS[0]
+        tai_label = lambda r: g.t('dist_' + r['wcvp_tai']) if r['wcvp_tai'] else g.t('wcvp_tai_absent')
+        if request.args.get('format') == 'csv':
+            out = io.StringIO()
+            w = csv.writer(out)
+            w.writerow(['taxon_id', 'simple_name', 'name_author', 'common_name_c', 'family', 'rank', 'taicol_alien_type',
+                        'wcvp_taiwan', 'wcvp_accepted_name', 'wcvp_accepted_authors', 'url'])
+            for r in by[show]:
+                w.writerow([r['taxon_id'], r['simple_name'], r['name_author'], r['common_name_c'], r['family'], r['rank'],
+                            r['alien_type'], r['wcvp_tai'] or 'absent', r['wcvp_name'], r['wcvp_authors'],
+                            f"https://taicol.tw/zh-hant/taxon/{r['taxon_id']}"])
+            return Response('\ufeff' + out.getvalue(), mimetype='text/csv', headers={
+                'Content-Disposition': f'attachment; filename=species123-wcvp-taiwan-{show}-{date.today().isoformat()}.csv'})
+        return render_template('wcvp_taiwan.html', rows=by[show], show=show,
+                               counts={c: len(v) for c, v in by.items()}, tai_label=tai_label)
 
     @app.route('/compare')
     def compare():

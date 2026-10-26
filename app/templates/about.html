@@ -26,7 +26,7 @@
     <ul>
       <li>以 <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> 的 TaiCOL ID（<a href="https://www.wikidata.org/wiki/Property:P12218" rel="noopener">P12218</a>）找到對應項目，再取得 <a href="https://www.gbif.org/" rel="noopener">GBIF</a>、<a href="https://www.inaturalist.org/" rel="noopener">iNaturalist</a>、<a href="https://ebird.org/" rel="noopener">eBird</a>、<a href="https://xeno-canto.org/" rel="noopener">xeno-canto</a> 的編號。</li>
       <li>沒有 TaiCOL ID 的項目，才以學名比對，且須階層、所屬科都相同、只有一個符合。</li>
-      <li><a href="https://tbiadata.tw/" rel="noopener">TBIA 生物多樣性資料庫共通查詢系統</a>的出現紀錄直接以 TaiCOL ID 查詢。</li>
+      <li><a href="https://tbiadata.tw/" rel="noopener">TBIA 生物多樣性資料庫共通查詢系統</a>的出現紀錄直接以 TaiCOL ID 查詢；物種頁的「標本」分頁也以 TaiCOL ID 透過 <a href="https://tbiadata.tw/zh-hant/api/doc" rel="noopener">TBIA API</a> 取得有影像的標本，臺灣的典藏單位優先，影像依各典藏單位授權。</li>
       <li>每個連結都標示依據：TaiCOL ID、Wikidata 或學名比對。</li>
     </ul>
   </section>
@@ -50,6 +50,7 @@
       <li>蕨類與種子植物的生活型、氣候帶、全球分布範圍與分布地圖，來自英國皇家植物園邱園的<a href="https://powo.science.kew.org/about-wcvp" rel="noopener">WCVP 世界維管束植物名錄</a>（Govaerts et al. 2021, <a href="https://doi.org/10.1038/s41597-021-00997-6" rel="noopener"><i>Scientific Data</i> 8: 215</a>），並連到 <a href="https://powo.science.kew.org/" rel="noopener">POWO</a> 與 <a href="https://www.ipni.org/" rel="noopener">IPNI</a>。</li>
       <li>以學名（不含命名者）將 TaiCOL 有效名對應到 WCVP；對應到 WCVP 的異名時，採用該異名的 WCVP 接受名，並在物種頁註明。有多個候選而無法判定的名稱不使用。</li>
       <li>分布地圖以世界植物分布地理區（<a href="https://github.com/tdwg/wgsrpd" rel="noopener">WGSRPD</a> 第三級）標示原生、引進、已滅絕與存疑的地區。</li>
+      <li>TaiCOL 的原生／外來狀態與 WCVP 的臺灣分布紀錄不一致時，物種頁會註明，並整理在<a href="{{ url_for('wcvp_taiwan') }}">WCVP 臺灣狀態比對</a>。</li>
     </ul>
   </section>
   <section>
@@ -74,7 +75,7 @@
     <ul>
       <li>Each taxon's <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> item is found by its TaiCOL ID (<a href="https://www.wikidata.org/wiki/Property:P12218" rel="noopener">P12218</a>), which gives its <a href="https://www.gbif.org/" rel="noopener">GBIF</a>, <a href="https://www.inaturalist.org/" rel="noopener">iNaturalist</a>, <a href="https://ebird.org/" rel="noopener">eBird</a> and <a href="https://xeno-canto.org/" rel="noopener">xeno-canto</a> IDs.</li>
       <li>Only items without a TaiCOL ID are matched by scientific name, and only when the rank and family also agree and exactly one item fits.</li>
-      <li>Occurrence records on the <a href="https://tbiadata.tw/" rel="noopener">TBIA data portal</a> (Taiwan Biodiversity Information Alliance) are searched by the TaiCOL ID directly.</li>
+      <li>Occurrence records on the <a href="https://tbiadata.tw/" rel="noopener">TBIA data portal</a> (Taiwan Biodiversity Information Alliance) are searched by the TaiCOL ID directly; the Specimens tab gets specimens with images through the <a href="https://tbiadata.tw/zh-hant/api/doc" rel="noopener">TBIA API</a> the same way, Taiwan's collections first, each image under its collection's licence.</li>
       <li>Every link says how it was found: TaiCOL ID, Wikidata, or name match.</li>
     </ul>
   </section>
@@ -98,6 +99,7 @@
       <li>Life form, climate, world range and the distribution map of ferns and seed plants come from the Royal Botanic Gardens, Kew's <a href="https://powo.science.kew.org/about-wcvp" rel="noopener">World Checklist of Vascular Plants</a> (Govaerts et al. 2021, <a href="https://doi.org/10.1038/s41597-021-00997-6" rel="noopener"><i>Scientific Data</i> 8: 215</a>), with links to <a href="https://powo.science.kew.org/" rel="noopener">POWO</a> and <a href="https://www.ipni.org/" rel="noopener">IPNI</a>.</li>
       <li>TaiCOL accepted names are matched to WCVP by name (without authors). A match to a WCVP synonym uses that synonym's WCVP accepted name, and the species page says so. Names with several candidates that cannot be told apart are left out.</li>
       <li>The map shows native, introduced, extinct and doubtful records by <a href="https://github.com/tdwg/wgsrpd" rel="noopener">WGSRPD</a> level-3 region ("botanical country").</li>
+      <li>Where TaiCOL's native / alien status disagrees with WCVP's Taiwan record, the species page says so, and the <a href="{{ url_for('wcvp_taiwan') }}">WCVP Taiwan status check</a> lists every case.</li>
     </ul>
   </section>
   <section>

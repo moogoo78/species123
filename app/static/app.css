@@ -185,6 +185,8 @@ main { flex: 1; }
 .results-table tbody tr.is-selected { background: var(--theme-primary-light); }
 .results-table td.nowrap { white-space: nowrap; }
 .results-table td:first-child, .results-table th:first-child { width: 40px; padding-left: 16px; }
+.results-table.no-select td:first-child, .results-table.no-select th:first-child { width: auto; }  /* lists without a checkbox column */
+.results-table.no-select tbody tr { cursor: default; }
 .results-table a.sci { color: var(--theme-tx-1); text-decoration: none; }
 .empty { background: var(--theme-bg-2); border-radius: 12px; padding: 48px 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .empty .title { font-size: 18px; font-weight: 700; color: var(--theme-tx-1); }
@@ -284,6 +286,15 @@ main { flex: 1; }
 /* field guide: photo mosaic + tabs */
 .profile-head.is-guide .wrap { padding-bottom: 0; }
 .photo.is-preview { height: 320px; }
+/* TBIA specimens: herbarium sheets and other specimens are mostly portrait */
+.specimen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.specimen-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.specimen-card .photo { aspect-ratio: 3 / 4; }
+.specimen-card .photo.is-broken::after { content: "—"; font-size: 24px; }
+.specimen-card .body { display: flex; flex-direction: column; gap: 2px; padding: 0 2px; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.specimen-card .name { font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
+.specimen-card .loc { color: var(--theme-tx-3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 600px) { .specimen-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 .photo img[data-src] { display: none; }
 .photo { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; background: var(--theme-bg-3); color: var(--theme-tx-3); }
@@ -340,6 +351,8 @@ main { flex: 1; }
 .wcvp-facts div { padding: 10px 12px; border-radius: 8px; background: var(--theme-bg-1); }
 .wcvp-facts dt { font-family: var(--font-sans-en); font-size: 11px; letter-spacing: .04em; color: var(--theme-tx-3); }
 .wcvp-facts dd { margin: 2px 0 0; font-weight: 700; color: var(--theme-tx-1); }
+.wcvp-check { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--theme-warning-light); color: var(--theme-tx-1); font-size: 14px; }
+.wcvp-check .svg { flex: none; margin-top: 3px; color: var(--theme-warning); }
 .range { display: flex; flex-direction: column; gap: 10px; }
 .range-map { aspect-ratio: 2 / 1; border-radius: 8px; background: var(--theme-bg-1); overflow: hidden; }
 .range-map svg { display: block; width: 100%; height: 100%; }

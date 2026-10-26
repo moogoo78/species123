@@ -235,7 +235,12 @@
     $$('.dot', root).forEach(function (c) { c.setAttribute('r', r); });
   }
 
-  // copy citation
+  // specimen images come from many collections' servers; one that fails shows the placeholder background
+  $$('.specimen-card img').forEach(function (img) {
+    img.addEventListener('error', function () { img.closest('.photo').classList.add('is-broken'); img.remove(); });
+  });
+
+    // copy citation
   $$('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var done = function () { toast(btn.dataset.copied); };

@@ -9,7 +9,7 @@
 
 - Flask + Jinja（伺服器端渲染），中文為主、可切換英文（`?lang=en`）
 - SQLite 唯讀資料庫 `data/species123.sqlite`，由匯入程式從 TaiCOL API 建立
-- [TBIA 生物多樣性資料庫共通查詢系統](https://tbiadata.tw/)的出現紀錄連結直接以 TaiCOL ID 查詢
+- [TBIA 生物多樣性資料庫共通查詢系統](https://tbiadata.tw/)的出現紀錄連結直接以 TaiCOL ID 查詢；物種頁的「標本」分頁以 [TBIA API](https://tbiadata.tw/zh-hant/api/doc)（`isCollection=true&hasMedia=image`）取得有影像的自然史典藏，臺灣典藏單位優先、最多 24 筆，快取於 `data/cache.sqlite`（30 天）
 - 外部連結（GBIF、iNaturalist、eBird、xeno-canto、Wikidata）來自 [Wikidata](https://www.wikidata.org/)：以 TaiCOL ID（P12218）一次查詢取得；沒有 TaiCOL ID 的屬以下分類群，改以學名（P225）找 Wikidata 項目，須學名、階層（P105）與所屬科皆相同、項目本身沒有 TaiCOL ID，且只有一個符合，存於 `data/raw/wikidata.json`，`import_taicol.py wikidata` 可單獨更新。Wikidata 沒有的 GBIF、iNaturalist 連結，於物種頁以學名比對補上（須與 TaiCOL 有效名完全相同且同界），結果快取於 `data/cache.sqlite`；每個連結都標示依據（Wikidata／學名比對）
 - 物種描述取自[維基百科](https://www.wikipedia.org/)（CC BY-SA 4.0）：經由該物種的 Wikidata 項目找到中文（臺灣正體）或英文條目，依頁面語言優先，取條目摘要，於物種頁瀏覽時抓取並快取 30 天；亞種、變種、品型沒有自己的條目時，改用所屬物種的條目並註明；沒有 Wikidata 項目的物種不顯示描述
 - 維管束植物的生活型、氣候帶、全球分布範圍、分布地圖與 POWO／IPNI 連結取自 [WCVP 世界維管束植物名錄](https://powo.science.kew.org/about-wcvp)（Kew）：`scripts/import_wcvp.py` 讀 `data/wcvp/`（WCVP 下載的 `wcvp_names.csv`、`wcvp_distribution.csv`，加上 `scripts/match_wcvp.py` 以 [gnparser](https://github.com/gnames/gnparser) 標準化學名後產生的 TaiCOL→WCVP 對應表 `taicol-wcvp-mapping.csv`），產生 `data/raw/wcvp.json`，`build` 時載入；對應到 WCVP 異名者採其接受名並於物種頁註明。地圖底圖 `app/static/wgsrpd-l3.svg` 由 `scripts/build_wgsrpd_svg.py` 從 [WGSRPD](https://github.com/tdwg/wgsrpd) 第三級 GeoJSON 產生
@@ -60,7 +60,8 @@ docker compose -f compose.yml -f compose.traefik.yml up -d --build
 | `/gallery`、`/gallery/<key>?show=taiwan\|endemic\|native\|alien\|all` | 圖鑑：依科排列的物種照片卡片，預設只列在臺灣的物種；圖鑑清單在 `app/galleries.py`，加一行即新增一本 |
 | `/search?q=&kingdom=&rank=&endemic=&alien=&redlist=&protected=&under=&sort=&page=` | 搜尋與分面篩選；`under=<taxon_id>` 限定某分類群之下 |
 | `/taxonomy?node=<taxon_id>` | 分類樹（下層延遲載入：`/taxonomy/children/<taxon_id>`） |
-| `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#photos` `#taxonomy` `#biology` `#refs`） |
+| `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#photos` `#specimens` `#taxonomy` `#biology` `#refs`） |
 | `/names`（POST `text`，`format=csv` 下載） | 學名擷取：貼上文字，找出學名並比對 TaiCOL 有效名，依科整理成名錄 |
+| `/wcvp-taiwan?show=differs\|wcvp_absent&format=csv` | WCVP 臺灣狀態比對：TaiCOL 原生／外來與 WCVP 臺灣（TAI）分布紀錄不一致的種與種下分類群（栽培植物沒有 WCVP 紀錄不算不一致），可下載 CSV |
 | `/compare?ids=a,b,c,d` | 最多 4 個分類群並列比較 |
 | `/about` | 關於：網站如何使用開放資料（TaiCOL、Wikidata、iNaturalist、維基百科） |

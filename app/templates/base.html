@@ -40,6 +40,7 @@
             <summary class="{{ 'is-active' if ep in ('names', 'compare') }}">{{ t('nav_tools') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span>{{ icon('chevron-right', '14px') }}</summary>
             <div class="nav-dropdown">
               <a href="{{ url_for('names') }}" class="{{ 'is-active' if ep == 'names' }}"><span>{{ t('nav_names') }}</span><small>{{ t('nav_names_hint') }}</small></a>
+              <a href="{{ url_for('wcvp_taiwan') }}" class="{{ 'is-active' if ep == 'wcvp_taiwan' }}"><span>{{ t('nav_wcvp_taiwan') }}</span><small>{{ t('nav_wcvp_taiwan_hint') }}</small></a>
               <a href="{{ url_for('compare') }}" data-compare-link class="{{ 'is-active' if ep == 'compare' }}"><span>{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></span><small>{{ t('nav_compare_hint') }}</small></a>
             </div>
           </details>
@@ -58,6 +59,7 @@
     <a href="{{ url_for('taxonomy') }}">{{ t('nav_taxonomy') }}</a>
     <span class="mobile-menu-head">{{ t('nav_tools') }}</span>
     <a href="{{ url_for('names') }}">{{ t('nav_names') }}</a>
+    <a href="{{ url_for('wcvp_taiwan') }}">{{ t('nav_wcvp_taiwan') }}</a>
     <a href="{{ url_for('compare') }}" data-compare-link>{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></a>
     <a href="{{ url_for('about') }}">{{ t('about') }}</a>
   </div>
