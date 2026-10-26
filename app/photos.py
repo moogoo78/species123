@@ -11,6 +11,8 @@ from .db import get_cache
 API = 'https://api.inaturalist.org/v1'
 TTL = 30 * 24 * 3600
 MAX_PHOTOS = 5
+THUMB_BATCH = 30  # iNaturalist ids per /taxa/{ids} request
+NAME_LOOKUPS = 10  # gallery species looked up by name per page view (no iNat id, or no usable photo)
 # TaiCOL kingdom -> iNaturalist kingdom taxon id; a hit must sit under the same kingdom
 # (homonyms like Actaea the crab genus vs Actaea the plant genus)
 INAT_KINGDOM = {'Animalia': 1, 'Plantae': 47126, 'Fungi': 47170, 'Chromista': 48222, 'Protozoa': 47686,
@@ -67,3 +69,40 @@ def taxon_photos(name, kingdom):
     cache.execute('INSERT OR REPLACE INTO photo_cache VALUES (?, ?, ?)', (key, json.dumps(data), time.time()))
     cache.commit()
     return data
+
+
+def _photo(p):
+    return {'square': p['square_url'], 'medium': p['medium_url'], 'attribution': p.get('attribution') or '',
+            'license': p['license_code'].upper(), 'page': f'https://www.inaturalist.org/photos/{p["id"]}'}
+
+
+def thumbs(inat_ids):
+    """{inat_id: photo or None}: each iNaturalist taxon's default photo, else its first openly licensed one.
+    Batched; misses cached too."""
+    ids = list(dict.fromkeys(str(i) for i in inat_ids if i))
+    cache = get_cache()
+    out, stale = {}, {}
+    for i in range(0, len(ids), 500):
+        chunk = ids[i:i + 500]
+        for inat_id, body, fetched in cache.execute(
+                f'SELECT inat_id, body, fetched_at FROM thumb_cache WHERE inat_id IN ({",".join("?" * len(chunk))})', chunk):
+            (out if time.time() - fetched < TTL else stale)[inat_id] = json.loads(body)
+    todo = [i for i in ids if i not in out]
+    for i in range(0, len(todo), THUMB_BATCH):
+        batch = todo[i:i + THUMB_BATCH]
+        try:
+            found = {str(r['id']): r for r in _get(f'{API}/taxa/' + ','.join(batch)).get('results') or []}
+        except Exception as e:
+            current_app.logger.warning('iNaturalist thumbs: %s', e)
+            out.update({b: stale.get(b) for b in batch})
+            continue
+        now = time.time()
+        for b in batch:
+            r = found.get(b) or {}
+            # the default photo, else the first openly licensed one of the taxon's photos
+            ok = [p for p in [r.get('default_photo') or {}] + [tp.get('photo') or {} for tp in r.get('taxon_photos') or []]
+                  if p.get('license_code') and p.get('square_url') and p.get('medium_url')]
+            out[b] = _photo(ok[0]) if ok else None
+            cache.execute('INSERT OR REPLACE INTO thumb_cache VALUES (?, ?, ?)', (b, json.dumps(out[b]), now))
+        cache.commit()
+    return out

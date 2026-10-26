@@ -101,6 +101,36 @@ main { flex: 1; }
   .list-row .hide-sm { display: none; }
 }
 
+/* field guide galleries */
+.gallery-head { background: var(--theme-bg-2); }
+.gallery-head .wrap { padding-top: 28px; padding-bottom: 28px; display: flex; flex-direction: column; gap: 12px; }
+.gallery-head h1 { font-size: 30px; font-weight: 700; color: var(--theme-tx-1); }
+.chips.is-start { justify-content: flex-start; }
+.chips .n, .family-bar .n { font-family: var(--font-mono); opacity: .7; }
+.family-bar { position: sticky; top: 62px; z-index: 40; background: var(--theme-bg-1); border-bottom: 1px solid var(--theme-bd-1); }
+.family-bar .wrap { display: flex; gap: 6px; padding-top: 10px; padding-bottom: 10px; overflow-x: auto; scrollbar-width: thin; }
+.family-bar .button { flex: none; }
+.family-section { scroll-margin-top: 130px; padding-bottom: 36px; }
+.family-head { font-size: 20px; font-weight: 700; color: var(--theme-tx-1); margin-bottom: 14px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.gallery-card { display: flex; flex-direction: column; gap: 8px; padding: 6px; border-radius: 12px; color: var(--theme-tx-2); text-decoration: none; }
+.gallery-card .photo { aspect-ratio: 1 / 1; }
+.gallery-card .no-photo { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; }
+.gallery-card .body { display: flex; flex-direction: column; gap: 3px; padding: 0 4px 4px; }
+.gallery-card .name { font-size: 16px; font-weight: 700; color: var(--theme-tx-1); }
+.gallery-card .sci { font-size: 13px; }
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+.guide-card { display: flex; flex-direction: column; gap: 12px; padding: 8px; border: 1px solid var(--theme-bd-1); border-radius: 14px; color: var(--theme-tx-2); text-decoration: none; }
+.guide-card .photo { aspect-ratio: 16 / 10; }
+.guide-card .body { display: flex; flex-direction: column; gap: 4px; padding: 0 8px 8px; }
+.guide-card .name { font-size: 20px; font-weight: 700; color: var(--theme-tx-1); }
+.guide-card .latin { font-size: 12px; }
+.guide-card .count { font-family: var(--font-mono); font-size: 13px; color: var(--theme-primary); }
+@media (width < 744px) {
+  .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .gallery-head h1 { font-size: 24px; }
+}
+
 /* two-column pages */
 .page-body { padding: 28px 20px 88px; }
 .with-sidebar { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; }

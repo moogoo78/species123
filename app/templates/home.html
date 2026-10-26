@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from '_icons.html' import icon %}
 {% from '_macros.html' import sci, badge_list with context %}
+{% from '_gallery_cards.html' import gallery_grid with context %}
 {% block main %}
 <section class="hero">
   <div class="inner">
@@ -35,6 +36,16 @@
       <span class="more">{{ t('daily_more') }} {{ icon('arrow-right') }}</span>
     </span>
   </a>
+</section>
+{% endif %}
+
+{% if gallery_cards %}
+<section class="wrap home-section">
+  <div class="section-head">
+    <h2>{{ t('galleries') }}</h2>
+    <a href="{{ url_for('gallery_index') }}">{{ t('nav_gallery') }} {{ icon('arrow-right') }}</a>
+  </div>
+  {{ gallery_grid(gallery_cards) }}
 </section>
 {% endif %}
 

@@ -134,6 +134,7 @@
         <button type="button" class="button is-plain is-primary is-round is-sm" data-add-compare="{{ tx.taxon_id }}" data-label-in="{{ t('in_compare') }}">{{ icon('columns', '14px') }}<span>{{ t('add_compare') }}</span></button>
         <button type="button" class="button is-outline is-round is-sm" data-copy="{{ cite }}" data-copied="{{ t('copied') }}">{{ icon('copy', '14px') }}{{ t('cite') }}</button>
         <a class="button is-outline is-round is-sm" href="https://taicol.tw/{{ 'zh-hant' if lang == 'zh' else 'en-us' }}/taxon/{{ tx.taxon_id }}" rel="noopener" target="_blank">{{ icon('external-link', '14px') }}{{ t('view_taicol') }}</a>
+        {% for key in in_galleries %}<a class="button is-outline is-round is-sm" href="{{ url_for('gallery', key=key) }}{% if tx.rank == 'Species' and not tx.is_in_taiwan %}?show=all{% endif %}">{{ icon('image', '14px') }}{{ t('gallery_view') }}</a>{% endfor %}
       </div>
     </div>
 

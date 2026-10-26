@@ -28,6 +28,7 @@ def get_cache():
         con.execute('CREATE TABLE IF NOT EXISTS photo_cache (name TEXT PRIMARY KEY, body TEXT, fetched_at REAL)')
         con.execute('CREATE TABLE IF NOT EXISTS gbif_cache (name TEXT PRIMARY KEY, body TEXT, fetched_at REAL)')
         con.execute('CREATE TABLE IF NOT EXISTS wiki_cache (name TEXT PRIMARY KEY, body TEXT, fetched_at REAL)')
+        con.execute('CREATE TABLE IF NOT EXISTS thumb_cache (inat_id TEXT PRIMARY KEY, body TEXT, fetched_at REAL)')
         g.cache = con
     return g.cache
 

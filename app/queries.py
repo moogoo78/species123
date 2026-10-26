@@ -107,13 +107,44 @@ def siblings(t, exclude, limit=6):
                 'ORDER BY simple_name LIMIT ?', (t['parent_id'], *exclude, limit))
 
 
-def _group_cond(keys):
-    """SQL condition for 'under any root of these common groups' (a taxon counts as under itself)."""
-    roots = taxa([r for k in keys if k in groups.BY_KEY for r in groups.BY_KEY[k][2]])
+def _under_cond(root_ids):
+    """SQL condition for 'under any of these taxa' (a taxon counts as under itself)."""
+    roots = taxa(root_ids)
     if not roots:
         return '0', []
     params = [x for r in roots for x in (r['path'], f"{r['path']},%")]
     return '(' + ' OR '.join('path = ? OR path LIKE ?' for _ in roots) + ')', params
+
+
+def _group_cond(keys):
+    """SQL condition for 'under any root of these common groups'."""
+    return _under_cond([r for k in keys if k in groups.BY_KEY for r in groups.BY_KEY[k][2]])
+
+
+# gallery filters; the first is the default
+GALLERY_SHOW = {
+    'taiwan': 'is_in_taiwan = 1',
+    'endemic': 'is_in_taiwan = 1 AND is_endemic = 1',
+    'native': "is_in_taiwan = 1 AND alien_type = 'native'",
+    'alien': "is_in_taiwan = 1 AND alien_type IN ('naturalized', 'invasive', 'cultured', 'cultivated')",
+    'all': '1',
+}
+
+
+def gallery_species(root_ids, show='taiwan'):
+    """Species under the roots, family by family, each with an iNaturalist id when Wikidata has one."""
+    cond, params = _under_cond(root_ids)
+    return rows(f"""SELECT {LIST_COLS}, is_in_taiwan,
+                     (SELECT ext_id FROM xref x WHERE x.taxon_id = taxon.taxon_id AND x.source = 'inaturalist'
+                      ORDER BY x.via = 'name' LIMIT 1) AS inat_id
+                    FROM taxon WHERE rank = 'Species' AND {cond} AND {GALLERY_SHOW[show]}
+                    ORDER BY family IS NULL, family, simple_name""", params)
+
+
+def gallery_counts(root_ids):
+    cond, params = _under_cond(root_ids)
+    sums = ', '.join(f'sum({c})' for c in GALLERY_SHOW.values())
+    return dict(zip(GALLERY_SHOW, one(f"SELECT {sums} FROM taxon WHERE rank = 'Species' AND {cond}", params)))
 
 
 def group_cards():

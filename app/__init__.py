@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from flask import Flask, Response, abort, g, render_template, request, send_from_directory
 from markupsafe import Markup, escape
 
-from . import extract, gbif, groups, i18n, photos, queries, taicol, wikipedia
+from . import extract, galleries, gbif, groups, i18n, photos, queries, taicol, wikipedia
 from .db import close_db, get_db
 
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -125,7 +125,7 @@ def create_app():
         daily = queries.species_of_the_day(today)
         daily_pics = photos.taxon_photos(daily['simple_name'], daily['kingdom']) if daily else None
         return render_template('home.html', kingdoms=queries.kingdoms(), recent=queries.recent(), groups=queries.group_cards(),
-                               daily=daily, daily_pics=daily_pics, today=today,
+                               daily=daily, daily_pics=daily_pics, today=today, gallery_cards=gallery_cards(),
                                suggestions=['Begonia formosana', '水鴨腳', 'Ursus thibetanus', '蘭科', 'Lepidoptera'])
 
     def search_filters():
@@ -251,7 +251,7 @@ def create_app():
         return render_template('taxon.html', tx=t, layout=layout, lineage=lin, crumbs=[x for x in lin if x['rank'] in MAJOR_RANKS],
                                facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, xrefs, pics.get('inat_id')),
                                refs=taicol.references(t['name_id']), pics=pics,
-                               desc=description(t, xrefs, lin),
+                               desc=description(t, xrefs, lin), in_galleries=galleries_of(t),
                                kids=queries.children(t['taxon_id'], 100) if t['n_children'] else [], cite=cite)
 
     def compare_groups(cmp):
@@ -279,6 +279,51 @@ def create_app():
                 rows.append({'label': label, 'cells': cells, 'differs': len(cmp) > 1 and len(set(cells)) > 1})
             out.append({'title': g.t(title), 'rows': rows})
         return out
+
+    def gallery_cover(roots):
+        """A photo for a gallery card: the first in-Taiwan species (endemic first) with an openly licensed photo."""
+        sp = sorted((r for r in queries.gallery_species(roots) if r['inat_id']), key=lambda r: not r['is_endemic'])
+        pics = photos.thumbs([r['inat_id'] for r in sp[:photos.THUMB_BATCH]])
+        return next((pics[r['inat_id']] for r in sp[:photos.THUMB_BATCH] if pics.get(r['inat_id'])), None)
+
+    def gallery_cards():
+        return [{'key': key, 'title': galleries.title(key, g.lang), 'n': queries.gallery_counts(roots)['taiwan'],
+                 'roots': queries.taxa(roots), 'cover': gallery_cover(roots)}
+                for key, _, _, roots in galleries.GALLERIES]
+
+    def galleries_of(t):
+        """Galleries this taxon is in (or is the root of)."""
+        return [key for key, _, _, roots in galleries.GALLERIES
+                if any(t['path'] == r['path'] or t['path'].startswith(r['path'] + ',') for r in queries.taxa(roots))]
+
+    @app.route('/gallery')
+    def gallery_index():
+        return render_template('galleries.html', cards=gallery_cards())
+
+    @app.route('/gallery/<key>')
+    def gallery(key):
+        if key not in galleries.BY_KEY:
+            return render_template('message.html', title=g.t('not_found'), hint=g.t('gallery_not_found_hint')), 404
+        roots = galleries.BY_KEY[key][2]
+        show = request.args.get('show') if request.args.get('show') in queries.GALLERY_SHOW else 'taiwan'
+        species = queries.gallery_species(roots, show)
+        thumbs = photos.thumbs([r['inat_id'] for r in species])
+        pics, lookups = {}, 0
+        for r in species:
+            pics[r['taxon_id']] = thumbs.get(r['inat_id'])
+            if not pics[r['taxon_id']] and lookups < photos.NAME_LOOKUPS:
+                # the species page's own name match (cached), a few per view so a cold gallery stays quick
+                lookups += 1
+                found = photos.taxon_photos(r['simple_name'], r['kingdom'])['photos']
+                pics[r['taxon_id']] = found[0] if found else None
+        families = []
+        for r in species:
+            if not families or families[-1]['name'] != r['family']:
+                families.append({'name': r['family'], 'name_c': r['family_c'], 'species': []})
+            families[-1]['species'].append(r)
+        return render_template('gallery.html', key=key, title=galleries.title(key, g.lang), roots=queries.taxa(roots),
+                               show=show, counts=queries.gallery_counts(roots), families=families, total=len(species),
+                               pics=pics)
 
     @app.route('/compare')
     def compare():

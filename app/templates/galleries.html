@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('galleries') }} · {{ t('site_name') }}{% endblock %}
+{% from '_gallery_cards.html' import gallery_grid with context %}
+{% block main %}
+<section class="gallery-head">
+  <div class="wrap">
+    <h1>{{ t('galleries') }}</h1>
+    <p class="muted">{{ t('galleries_lead') }}</p>
+  </div>
+</section>
+<div class="wrap page-body">{{ gallery_grid(cards) }}</div>
+{% endblock %}

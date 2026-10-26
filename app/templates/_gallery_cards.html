@@ -1,0 +1,15 @@
+{% from '_icons.html' import icon %}
+{% macro gallery_grid(cards) -%}
+<div class="guide-grid">
+  {% for c in cards %}
+  <a class="guide-card hover-bg" href="{{ url_for('gallery', key=c.key) }}">
+    <span class="photo">{% if c.cover %}<img src="{{ c.cover.medium }}" alt="{{ c.title }}" loading="lazy" referrerpolicy="no-referrer"><span class="credit">{{ c.cover.attribution }}</span>{% else %}{{ icon('image', '32px') }}{% endif %}</span>
+    <span class="body">
+      <span class="name">{{ c.title }}</span>
+      <span class="muted latin en">{{ c.roots|map(attribute='simple_name')|join(' · ') }}</span>
+      <span class="count">{{ t('gallery_count', n=c.n) }}</span>
+    </span>
+  </a>
+  {% endfor %}
+</div>
+{%- endmacro %}

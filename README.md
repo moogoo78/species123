@@ -43,9 +43,10 @@ docker compose -f compose.yml up -d
 
 | 路徑 | 說明 |
 |---|---|
-| `/` | 首頁：搜尋、依界瀏覽、最近更新 |
+| `/` | 首頁：搜尋、今日物種、圖鑑、常用類群、依界瀏覽、最近更新 |
+| `/gallery`、`/gallery/<key>?show=taiwan\|endemic\|native\|alien\|all` | 圖鑑：依科排列的物種照片卡片，預設只列在臺灣的物種；圖鑑清單在 `app/galleries.py`，加一行即新增一本 |
 | `/search?q=&kingdom=&rank=&endemic=&alien=&redlist=&protected=&under=&sort=&page=` | 搜尋與分面篩選；`under=<taxon_id>` 限定某分類群之下 |
 | `/taxonomy?node=<taxon_id>` | 分類樹（下層延遲載入：`/taxonomy/children/<taxon_id>`） |
-| `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#taxonomy` `#distribution` `#names` `#refs`） |
+| `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#photos` `#taxonomy` `#biology` `#refs`） |
 | `/names`（POST `text`，`format=csv` 下載） | 學名擷取：貼上文字，找出學名並比對 TaiCOL 有效名，依科整理成名錄 |
 | `/compare?ids=a,b,c,d` | 最多 4 個分類群並列比較 |
