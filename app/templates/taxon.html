@@ -70,7 +70,7 @@
 {% macro refs_list(style='') %}
 {% if refs is none %}<p class="muted" style="font-size:13px">{{ t('refs_unavailable') }}</p>
 {% elif not refs %}<p class="muted" style="font-size:13px">{{ t('none_recorded') }}</p>
-{% else %}{% for r in refs %}<p class="ref" style="{{ style }}">{{ r.citation|italic }}</p>{% endfor %}
+{% else %}{% for r in refs %}<p class="ref" style="{{ style }}">{% if r.reference_id %}<a href="https://nametool.taicol.tw/{{ 'zh-tw' if lang == 'zh' else 'en-us' }}/references/{{ r.reference_id }}" rel="noopener" target="_blank">{{ r.citation|italic }}</a>{% else %}{{ r.citation|italic }}{% endif %}</p>{% endfor %}
 <p class="muted" style="font-size:12px">{{ t('refs_credit') }} · <a href="https://taicol.tw/{{ 'zh-hant' if lang == 'zh' else 'en-us' }}/taxon/{{ tx.taxon_id }}" rel="noopener" target="_blank">{{ t('view_taicol') }}</a></p>{% endif %}
 {% endmacro %}
 
