@@ -10,6 +10,7 @@
 - Flask + Jinja（伺服器端渲染），中文為主、可切換英文（`?lang=en`）
 - SQLite 唯讀資料庫 `data/species123.sqlite`，由匯入程式從 TaiCOL API 建立
 - 外部連結（GBIF、iNaturalist、eBird、xeno-canto、Wikidata）來自 [Wikidata](https://www.wikidata.org/)：以 TaiCOL ID（P12218）一次查詢取得，存於 `data/raw/wikidata.json`，`import_taicol.py wikidata` 可單獨更新。Wikidata 沒有的 GBIF、iNaturalist 連結，於物種頁以學名比對補上（須與 TaiCOL 有效名完全相同且同界），結果快取於 `data/cache.sqlite`；每個連結都標示依據（Wikidata／學名比對）
+- 物種描述取自[維基百科](https://www.wikipedia.org/)（CC BY-SA 4.0）：經由該物種的 Wikidata 項目找到中文（臺灣正體）或英文條目，依頁面語言優先，取條目摘要，於物種頁瀏覽時抓取並快取 30 天；沒有 Wikidata 項目的物種不顯示描述（不以名稱搜尋）
 - 文獻在物種頁即時向 TaiCOL 取得；照片取自 iNaturalist（僅 CC 授權照片，附作者標示）。兩者都快取於 `data/cache.sqlite`（30 天）
 - MUSUBii 9.4.0 CSS（Docker build 時由 npm 取得），少量原生 JS（深淺色、比較清單、分類樹展開）
 

@@ -18,6 +18,16 @@
 {% if pics.photos %}<p class="muted" style="font-size:12px">{{ t('photos_credit') }}{% if pics.inat_id %} · <a href="https://www.inaturalist.org/taxa/{{ pics.inat_id }}" rel="noopener" target="_blank">{{ t('more_photos') }}</a>{% endif %}</p>{% endif %}
 {%- endmacro %}
 
+{% macro description(heading=True) -%}
+{% if desc %}
+<div class="description">
+  {% if heading %}<h3 class="eyebrow">{{ t('description') }}</h3>{% endif %}
+  <p{% if desc.lang == 'en' %} lang="en"{% endif %}>{{ desc.extract }}</p>
+  <p class="muted" style="font-size:12px">{{ t('desc_credit') }}{% if desc.lang != lang %} ({{ t('lang_' + desc.lang) }}){% endif %} · <a href="{{ desc.url }}" rel="noopener" target="_blank">{{ t('read_more') }}</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license" target="_blank">CC BY-SA 4.0</a></p>
+</div>
+{% endif %}
+{%- endmacro %}
+
 {% macro fact_tiles(keys=None, exclude=None) -%}
 <div class="fact-tiles">
   {% for f in facts if (keys is none or f.key in keys) and (exclude is none or f.key not in exclude) %}
@@ -156,6 +166,7 @@
     </section>
     <section id="biology" class="block" data-tab-panel="biology">
       <h2>{{ t('biology') }}</h2>
+      {{ description() }}
       <h3 class="eyebrow">{{ t('habitat_status') }}</h3>
       <table class="table is-line facts-table"><tbody>
         {% for f in facts if f.key in dist_facts %}<tr><th>{{ f.label }}</th><td>{{ f.value }}</td></tr>{% endfor %}
@@ -197,6 +208,7 @@
       <table class="table is-line facts-table"><tbody>
         {% for f in facts %}<tr><th>{{ f.label }}</th><td>{{ f.value }}</td></tr>{% endfor %}
       </tbody></table>
+      {{ description() }}
     </div>
     {{ children_list() }}
     <div class="block">
@@ -227,6 +239,7 @@
       {% if pics.photos %}{{ photo(pics.photos[0], 'large', 'is-wide') }}{% endif %}
       {{ fact_tiles() }}
       {{ photos_credit() }}
+      {{ description() }}
     </div>
     <div id="m-taxonomy" class="block">
       <h2>{{ t('classification') }}</h2>

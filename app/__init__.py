@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from flask import Flask, Response, abort, g, render_template, request, send_from_directory
 from markupsafe import Markup, escape
 
-from . import extract, gbif, groups, i18n, photos, queries, taicol
+from . import extract, gbif, groups, i18n, photos, queries, taicol, wikipedia
 from .db import close_db, get_db
 
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -233,9 +233,11 @@ def create_app():
         cite = (f"{t['simple_name']} {t['name_author'] or ''}".strip() +
                 f". TaiCOL 臺灣物種名錄. https://taicol.tw/zh-hant/taxon/{t['taxon_id']} (accessed {date.today().isoformat()})")
         pics = photos.taxon_photos(t['simple_name'], t['kingdom'])
+        qid = (queries.xrefs(t['taxon_id']).get('wikidata') or [None])[0]
         return render_template('taxon.html', tx=t, layout=layout, lineage=lin, crumbs=[x for x in lin if x['rank'] in MAJOR_RANKS],
                                facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, pics.get('inat_id')),
                                refs=taicol.references(t['name_id']), pics=pics,
+                               desc=wikipedia.summary(qid, g.lang) if qid else None,
                                kids=queries.children(t['taxon_id'], 100) if t['n_children'] else [], cite=cite)
 
     def compare_groups(cmp):

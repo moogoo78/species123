@@ -193,6 +193,8 @@ main { flex: 1; }
 .block > h2 { font-size: 20px; font-weight: 700; color: var(--theme-tx-1); }
 .facts-table { width: 100%; font-size: 14px; }
 .facts-table td { white-space: pre-line; }
+.description { display: flex; flex-direction: column; gap: 6px; }
+.description p:not(.muted) { font-size: 15px; line-height: 1.85; color: var(--theme-tx-2); text-wrap: pretty; }
 .facts-table th { width: 140px; font-weight: 600; color: var(--theme-tx-1); text-align: left; }
 .side-list { display: flex; flex-direction: column; gap: 8px; }
 .side-item { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--theme-bd-1); font-size: 14px; }
