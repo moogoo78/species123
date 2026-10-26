@@ -1,4 +1,4 @@
-// TaiEN client behaviour: theme, menu, compare tray, search selection, lazy taxonomy tree.
+// Species123 client behaviour: theme, menu, compare tray, search selection, lazy taxonomy tree.
 (function () {
   'use strict';
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -26,7 +26,7 @@
     btn.addEventListener('click', function () {
       var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem('taien.theme', next); } catch (e) {}
+      try { localStorage.setItem('species123.theme', next); } catch (e) {}
       paintTheme();
     });
   });
@@ -42,10 +42,10 @@
   });
 
   // compare tray (ids in localStorage, mirrored into nav links)
-  function tray() { return store.get('taien.compare', []).slice(0, MAX); }
+  function tray() { return store.get('species123.compare', store.get('taien.compare', [])).slice(0, MAX); }
   function setTray(ids) {
     var uniq = ids.filter(function (x, i) { return x && ids.indexOf(x) === i; }).slice(-MAX);
-    store.set('taien.compare', uniq);
+    store.set('species123.compare', uniq);
     paintTray();
   }
   function compareUrl(ids) { return '/compare' + (ids.length ? '?ids=' + ids.join(',') : ''); }
@@ -76,7 +76,7 @@
       location.replace(compareUrl(tray()));
       return;
     }
-    store.set('taien.compare', pageIds);
+    store.set('species123.compare', pageIds);
     var diff = $('[data-diff-only]');
     if (diff) diff.addEventListener('change', function () { $('[data-compare-grid]').classList.toggle('diff-only', diff.checked); });
   }

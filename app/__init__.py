@@ -17,7 +17,7 @@ COMPARE_MAX = 4
 LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the default
 # facts shown under the field guide's distribution tab rather than the overview
 DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note', 'fact_habitat', 'fact_fossil'}
-VENDOR = os.environ.get('TAIEN_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
+VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
 
 
 def italic(html):
@@ -291,7 +291,7 @@ def create_app():
             for m in missing:
                 w.writerow([m['name'], m['count']] + [''] * 14)
             return Response('\ufeff' + out.getvalue(), mimetype='text/csv',
-                            headers={'Content-Disposition': f'attachment; filename=taien-checklist-{date.today().isoformat()}.csv'})
+                            headers={'Content-Disposition': f'attachment; filename=species123-checklist-{date.today().isoformat()}.csv'})
         n_species = sum(1 for r in rows if r['t']['rank'] == 'Species' or r['t']['rank'] in INFRA_RANKS)
         return render_template('names.html', text=text, rows=rows, missing=missing, n_species=n_species,
                                max_chars=extract.MAX_CHARS)

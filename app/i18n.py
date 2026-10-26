@@ -4,8 +4,8 @@ LANGS = ('zh', 'en')
 DEFAULT_LANG = 'zh'
 
 STRINGS = {
-    'site_name': ('臺緣', 'TaiEN'),
-    'site_tagline': ('臺灣物種圖誌', 'Atlas of Taiwan species'),
+    'site_name': ('Species123', 'Species123'),
+    'site_tagline': ('臺灣物種圖鑑', 'Field guide to Taiwan species'),
     'nav_search': ('搜尋', 'Search'),
     'nav_taxonomy': ('分類樹', 'Taxonomy'),
     'nav_compare': ('比較', 'Compare'),
@@ -30,7 +30,6 @@ STRINGS = {
     'menu': ('選單', 'Menu'),
     'lang_switch': ('EN', '中文'),
     'hero_badge': ('臺灣物種名錄 TaiCOL · {n} 個有效分類群', 'Taiwan Catalogue of Life · {n} accepted taxa'),
-    'hero_title': ('一個一個物種，結起臺灣的生命之緣', "Every species in Taiwan, one careful record at a time"),
     'hero_lead': ('有效學名、中文名、分類階層、特有性與保育等級，資料來自臺灣物種名錄。',
                   'Accepted names, Chinese names, classification, endemism and conservation status from TaiCOL.'),
     'search_placeholder': ('水鴨腳、Begonia、臺灣黑熊、蘭科…', 'Begonia formosana, Ursus, Orchidaceae…'),
@@ -110,7 +109,7 @@ STRINGS = {
     'fact_endemic': ('特有性', 'Endemism'),
     'fact_alien': ('原生／外來', 'Native / alien'),
     'fact_alien_note': ('外來狀態備註', 'Alien status note'),
-    'fact_habitat': ('棲地', 'Habitat'),
+    'fact_habitat': ('棲地類型', 'Habitat type'),
     'fact_fossil': ('化石種', 'Fossil'),
     'fact_iucn': ('IUCN', 'IUCN'),
     'fact_redlist': ('臺灣紅皮書', 'Taiwan Red List'),

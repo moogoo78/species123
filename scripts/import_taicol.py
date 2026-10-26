@@ -1,7 +1,7 @@
-"""Import TaiCOL accepted taxa (accepted names only — no synonyms) into data/taien.sqlite.
+"""Import TaiCOL accepted taxa (accepted names only — no synonyms) into data/species123.sqlite.
 
     python scripts/import_taicol.py fetch   # page api.taicol.tw/v2/taxon into data/raw/ (resumable)
-    python scripts/import_taicol.py build   # build data/taien.sqlite from data/raw/
+    python scripts/import_taicol.py build   # build data/species123.sqlite from data/raw/
     python scripts/import_taicol.py         # both
 
 The API caps pages at 300 rows, so a full fetch is ~460 requests. Pages already
@@ -19,9 +19,9 @@ from pathlib import Path
 
 API = 'https://api.taicol.tw/v2/taxon'
 PAGE = 300
-DATA = Path(os.environ.get('TAIEN_DATA', Path(__file__).resolve().parent.parent / 'data'))
+DATA = Path(os.environ.get('SPECIES123_DATA', Path(__file__).resolve().parent.parent / 'data'))
 RAW = DATA / 'raw'
-DB = DATA / 'taien.sqlite'
+DB = DATA / 'species123.sqlite'
 
 # Ranks counted in taxon_rank_count (node stat tiles) and used for sorting.
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -88,7 +88,7 @@ COLUMNS = ['taxon_id', 'name_id', 'rank', 'simple_name', 'name_author', 'formatt
 def get_json(url, tries=5):
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'TaiEN importer'})
+            req = urllib.request.Request(url, headers={'User-Agent': 'Species123 importer (+https://species123.naturedb.org)'})
             with urllib.request.urlopen(req, timeout=120) as resp:
                 data = json.load(resp)
             if data.get('status', {}).get('code') == 200:

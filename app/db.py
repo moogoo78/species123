@@ -4,8 +4,8 @@ from pathlib import Path
 
 from flask import g
 
-DATA = Path(os.environ.get('TAIEN_DATA', Path(__file__).resolve().parent.parent / 'data'))
-DB_PATH = DATA / 'taien.sqlite'
+DATA = Path(os.environ.get('SPECIES123_DATA', Path(__file__).resolve().parent.parent / 'data'))
+DB_PATH = DATA / 'species123.sqlite'
 CACHE_PATH = DATA / 'cache.sqlite'
 
 

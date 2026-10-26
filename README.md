@@ -1,21 +1,21 @@
-# TaiEN 臺緣
+# Species123
 
 臺灣物種圖誌：以 [TaiCOL 臺灣物種名錄](https://taicol.tw/) 為資料來源的公開物種網站（類似生物誌 biota）。
-名字取自「結び／緣結」——把每個物種和臺灣的緣分結起來。
+網址：<https://species123.naturedb.org>
 
 版面參考 *Atlas of Life* 原型（MUSUBii CSS）：首頁、搜尋（分面篩選）、分類樹、物種頁（圖鑑／資料表／文章，預設圖鑑）、比較。
 
 ## 架構
 
 - Flask + Jinja（伺服器端渲染），中文為主、可切換英文（`?lang=en`）
-- SQLite 唯讀資料庫 `data/taien.sqlite`，由匯入程式從 TaiCOL API 建立
+- SQLite 唯讀資料庫 `data/species123.sqlite`，由匯入程式從 TaiCOL API 建立
 - 文獻在物種頁即時向 TaiCOL 取得；照片取自 iNaturalist（僅 CC 授權照片，附作者標示）。兩者都快取於 `data/cache.sqlite`（30 天）
 - MUSUBii 9.4.0 CSS（Docker build 時由 npm 取得），少量原生 JS（深淺色、比較清單、分類樹展開）
 
 ```
 app/            Flask app (routes in __init__.py, SQL in queries.py, zh/en strings in i18n.py)
 scripts/        import_taicol.py
-data/           taien.sqlite, cache.sqlite, raw/ (API pages) — not in git
+data/           species123.sqlite, cache.sqlite, raw/ (API pages) — not in git
 ```
 
 ## 執行

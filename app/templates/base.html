@@ -10,7 +10,7 @@
   // apply saved / system theme before first paint
   (function () {
     var th = null;
-    try { th = localStorage.getItem('taien.theme'); } catch (e) {}
+    try { th = localStorage.getItem('species123.theme') || localStorage.getItem('taien.theme'); } catch (e) {}
     if (!th) th = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', th);
   })();
@@ -57,7 +57,7 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <span>{{ t('site_name') }} TaiEN · <a href="https://taicol.tw/" rel="noopener">{{ t('footer_source') }}</a>{% if data_meta.fetched_at %} · {{ t('footer_version', d=data_meta.fetched_at[:10]) }}{% endif %}</span>
+      <span>{{ t('site_name') }} · <a href="https://taicol.tw/" rel="noopener">{{ t('footer_source') }}</a>{% if data_meta.fetched_at %} · {{ t('footer_version', d=data_meta.fetched_at[:10]) }}{% endif %}</span>
       <span><a href="https://api.taicol.tw/" rel="noopener">TaiCOL API</a></span>
     </div>
   </footer>

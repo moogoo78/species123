@@ -18,7 +18,7 @@ INAT_KINGDOM = {'Animalia': 1, 'Plantae': 47126, 'Fungi': 47170, 'Chromista': 48
 
 
 def _get(url):
-    req = urllib.request.Request(url, headers={'User-Agent': 'TaiEN (taxon photos)'})
+    req = urllib.request.Request(url, headers={'User-Agent': 'Species123 (+https://species123.naturedb.org; taxon photos)'})
     with urllib.request.urlopen(req, timeout=5) as resp:
         return json.load(resp)
 

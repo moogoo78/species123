@@ -20,7 +20,7 @@ def references(name_id):
     if hit and time.time() - hit[1] < TTL:
         return json.loads(hit[0])
     try:
-        req = urllib.request.Request(f'{API}/references?name_id={int(name_id)}', headers={'User-Agent': 'TaiEN'})
+        req = urllib.request.Request(f'{API}/references?name_id={int(name_id)}', headers={'User-Agent': 'Species123 (+https://species123.naturedb.org)'})
         with urllib.request.urlopen(req, timeout=6) as resp:
             data = json.load(resp)
         if data.get('status', {}).get('code') != 200:

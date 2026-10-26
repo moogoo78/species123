@@ -21,7 +21,7 @@ from pathlib import Path
 
 BASE = 'https://www.oca.gov.tw/ch/home.jsp'
 MENU = {'id': '535', 'parentpath': '0,298'}
-DATA = Path(os.environ.get('TAIEN_DATA', Path(__file__).resolve().parent.parent / 'data'))
+DATA = Path(os.environ.get('SPECIES123_DATA', Path(__file__).resolve().parent.parent / 'data'))
 RAW = DATA / 'oca-seagrass'
 OUT = Path(__file__).resolve().parent / 'oca-seagrass.csv'
 
