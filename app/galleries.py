@@ -6,6 +6,7 @@ Add a gallery by adding a line; the key is its URL, /gallery/<key>.
 GALLERIES = [
     # key, zh title, en title, TaiCOL root taxon_ids
     ('amphibians', '臺灣兩棲類圖鑑', 'Amphibians of Taiwan', ['t0000464']),  # Amphibia
+    ('reptiles', '臺灣爬蟲類圖鑑', 'Reptiles of Taiwan', ['t0000545']),     # Reptilia (incl. turtles)
 ]
 BY_KEY = {k: (zh, en, roots) for k, zh, en, roots in GALLERIES}
 

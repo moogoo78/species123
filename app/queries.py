@@ -121,12 +121,13 @@ def _group_cond(keys):
     return _under_cond([r for k in keys if k in groups.BY_KEY for r in groups.BY_KEY[k][2]])
 
 
-# gallery filters; the first is the default
+# gallery filters; the first is the default. Living species only, except under 'all'
+_LIVING_TW = 'is_in_taiwan = 1 AND NOT coalesce(is_fossil, 0)'
 GALLERY_SHOW = {
-    'taiwan': 'is_in_taiwan = 1',
-    'endemic': 'is_in_taiwan = 1 AND is_endemic = 1',
-    'native': "is_in_taiwan = 1 AND alien_type = 'native'",
-    'alien': "is_in_taiwan = 1 AND alien_type IN ('naturalized', 'invasive', 'cultured', 'cultivated')",
+    'taiwan': _LIVING_TW,
+    'endemic': f'{_LIVING_TW} AND is_endemic = 1',
+    'native': f"{_LIVING_TW} AND alien_type = 'native'",
+    'alien': f"{_LIVING_TW} AND alien_type IN ('naturalized', 'invasive', 'cultured', 'cultivated')",
     'all': '1',
 }
 
