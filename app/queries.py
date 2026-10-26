@@ -39,6 +39,14 @@ def taxon(taxon_id):
     return one('SELECT * FROM taxon WHERE taxon_id = ?', (taxon_id,))
 
 
+def xrefs(taxon_id):
+    """{source: [ids]} from Wikidata (see scripts/import_taicol.py WD_PROPS)."""
+    out = {}
+    for r in rows('SELECT source, ext_id FROM xref WHERE taxon_id = ? ORDER BY source, ext_id', (taxon_id,)):
+        out.setdefault(r['source'], []).append(r['ext_id'])
+    return out
+
+
 def taxa(ids):
     if not ids:
         return []

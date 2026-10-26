@@ -90,6 +90,7 @@ STRINGS = {
     'view_taicol': ('在 TaiCOL 檢視', 'View on TaiCOL'),
     'classification': ('分類', 'Classification'),
     'identifiers': ('識別碼', 'Identifiers'),
+    'external_links': ('外部連結', 'External links'),
     'key_facts': ('重點資訊', 'Key facts'),
     'habitat_status': ('棲地與原生性', 'Habitat & status'),
     'common_names': ('俗名', 'Common names'),

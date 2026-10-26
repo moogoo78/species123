@@ -51,6 +51,15 @@
 <p class="muted" style="font-size:12px">{{ t('refs_credit') }} · <a href="https://taicol.tw/{{ 'zh-hant' if lang == 'zh' else 'en-us' }}/taxon/{{ tx.taxon_id }}" rel="noopener" target="_blank">{{ t('view_taicol') }}</a></p>{% endif %}
 {% endmacro %}
 
+{% macro ext_links() %}
+{% if links %}
+<h3 class="eyebrow">{{ t('external_links') }}</h3>
+<div class="chips" style="justify-content:flex-start">
+  {% for l in links %}<a class="button is-outline is-round is-xs" href="{{ l.url }}" rel="noopener" target="_blank">{{ icon('external-link', '12px') }}{{ l.label }}</a>{% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
 {% macro children_list() %}
 {% if kids %}
 <div class="block">
@@ -133,6 +142,7 @@
     <section id="taxonomy" class="block" data-tab-panel="taxonomy">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
+      {{ ext_links() }}
     </section>
     <section id="distribution" class="block" data-tab-panel="distribution">
       <h2>{{ t('habitat_status') }}</h2>
@@ -169,7 +179,7 @@
       <h2 class="eyebrow">{{ t('identifiers') }}</h2>
       <div class="kv"><span>TaiCOL taxon</span><a class="mono" href="https://taicol.tw/zh-hant/taxon/{{ tx.taxon_id }}" rel="noopener">{{ tx.taxon_id }}</a></div>
       {% if tx.name_id %}<div class="kv"><span>TaiCOL name</span><span class="mono">{{ tx.name_id }}</span></div>{% endif %}
-      {% if pics.inat_id %}<div class="kv"><span>iNaturalist</span><a class="mono" href="https://www.inaturalist.org/taxa/{{ pics.inat_id }}" rel="noopener">{{ pics.inat_id }}</a></div>{% endif %}
+      {% for l in links %}<div class="kv"><span>{{ l.label }}</span><a class="mono" href="{{ l.url }}" rel="noopener">{{ l.id }}</a></div>{% endfor %}
     </div>
   </aside>
   <section>
@@ -212,6 +222,7 @@
     <div id="m-taxonomy" class="block">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
+      {{ ext_links() }}
       {{ children_list() }}
     </div>
     <div id="m-names" class="side-list">

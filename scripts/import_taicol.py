@@ -1,17 +1,20 @@
 """Import TaiCOL accepted taxa (accepted names only — no synonyms) into data/species123.sqlite.
 
-    python scripts/import_taicol.py fetch   # page api.taicol.tw/v2/taxon into data/raw/ (resumable)
-    python scripts/import_taicol.py build   # build data/species123.sqlite from data/raw/
-    python scripts/import_taicol.py         # both
+    python scripts/import_taicol.py fetch     # page api.taicol.tw/v2/taxon into data/raw/ (resumable)
+    python scripts/import_taicol.py wikidata  # refresh data/raw/wikidata.json (GBIF / iNaturalist / eBird / xeno-canto ids)
+    python scripts/import_taicol.py build     # build data/species123.sqlite from data/raw/
+    python scripts/import_taicol.py           # fetch + build
 
 The API caps pages at 300 rows, so a full fetch is ~460 requests. Pages already
-on disk are skipped; delete data/raw/ to force a fresh download.
+on disk are skipped; delete data/raw/ to force a fresh download. fetch also gets
+the Wikidata cross-references when data/raw/wikidata.json is missing.
 """
 import json
 import os
 import sqlite3
 import sys
 import time
+import urllib.parse
 import urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -21,6 +24,10 @@ API = 'https://api.taicol.tw/v2/taxon'
 PAGE = 300
 DATA = Path(os.environ.get('SPECIES123_DATA', Path(__file__).resolve().parent.parent / 'data'))
 RAW = DATA / 'raw'
+WDQS = 'https://query.wikidata.org/sparql'
+# Wikidata property -> xref source. GBIF re-keyed its taxa in 2026 (P14607); most items still carry only P846.
+WD_PROPS = {'P14607': 'gbif', 'P846': 'gbif_legacy', 'P3151': 'inaturalist', 'P3444': 'ebird', 'P2426': 'xenocanto'}
+UA = 'Species123 importer (+https://species123.naturedb.org)'
 DB = DATA / 'species123.sqlite'
 
 # Ranks counted in taxon_rank_count (node stat tiles) and used for sorting.
@@ -67,6 +74,7 @@ CREATE TABLE taxon (
 );
 CREATE TABLE taxon_rank_count (taxon_id TEXT, rank TEXT, n INTEGER, PRIMARY KEY (taxon_id, rank));
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE xref (taxon_id TEXT, source TEXT, ext_id TEXT, PRIMARY KEY (taxon_id, source, ext_id));
 """
 
 INDEXES = """
@@ -88,7 +96,7 @@ COLUMNS = ['taxon_id', 'name_id', 'rank', 'simple_name', 'name_author', 'formatt
 def get_json(url, tries=5):
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Species123 importer (+https://species123.naturedb.org)'})
+            req = urllib.request.Request(url, headers={'User-Agent': UA})
             with urllib.request.urlopen(req, timeout=120) as resp:
                 data = json.load(resp)
             if data.get('status', {}).get('code') == 200:
@@ -132,6 +140,31 @@ def fetch():
         tmp.replace(out)
         print(f'  {offset + PAGE}/{total}', flush=True)
     (RAW / 'fetched_at.txt').write_text(datetime.now(timezone.utc).isoformat(timespec='seconds'))
+    if not (RAW / 'wikidata.json').exists():
+        fetch_wikidata()
+
+
+def fetch_wikidata():
+    """Every Wikidata item with a TaiCOL id (P12218), with its Q id and the WD_PROPS ids, in one query."""
+    props = ' '.join(f'wdt:{p}' for p in WD_PROPS)
+    query = f"""SELECT ?t ?item ?p ?v WHERE {{
+      ?item wdt:P12218 ?t .
+      OPTIONAL {{ VALUES ?p {{ {props} }} ?item ?p ?v }}
+    }}"""
+    req = urllib.request.Request(f'{WDQS}?{urllib.parse.urlencode({"query": query})}',
+                                 headers={'User-Agent': UA, 'Accept': 'application/sparql-results+json'})
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        bindings = json.load(resp)['results']['bindings']
+    rows = set()
+    for b in bindings:
+        tid = b['t']['value']
+        rows.add((tid, 'wikidata', b['item']['value'].rsplit('/', 1)[-1]))
+        if 'v' in b:
+            rows.add((tid, WD_PROPS[b['p']['value'].rsplit('/', 1)[-1]], b['v']['value']))
+    RAW.mkdir(parents=True, exist_ok=True)
+    out = {'fetched_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'rows': sorted(rows)}
+    (RAW / 'wikidata.json').write_text(json.dumps(out, ensure_ascii=False))
+    print(f'wikidata: {len(rows)} cross-references for {len({r[0] for r in rows})} TaiCOL ids', flush=True)
 
 
 def flag(v):
@@ -207,10 +240,12 @@ def build():
 
     con.executemany(sql, (values(tid, t) for tid, t in rows.items()))
     con.executemany('INSERT INTO taxon_rank_count VALUES (?,?,?)', ((a, r, n) for (a, r), n in rank_count.items()))
+    wd = json.loads((RAW / 'wikidata.json').read_text()) if (RAW / 'wikidata.json').exists() else {'rows': []}
+    con.executemany('INSERT INTO xref VALUES (?,?,?)', (r for r in wd['rows'] if r[0] in rows))
     fetched = (RAW / 'fetched_at.txt').read_text().strip() if (RAW / 'fetched_at.txt').exists() else ''
     con.executemany('INSERT INTO meta VALUES (?,?)', [
         ('source', API), ('fetched_at', fetched), ('built_at', datetime.now(timezone.utc).isoformat(timespec='seconds')),
-        ('taxa', str(len(rows))),
+        ('taxa', str(len(rows))), ('wikidata_fetched_at', wd.get('fetched_at', '')),
     ])
     con.executescript(INDEXES)
     con.commit()
@@ -224,5 +259,7 @@ if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'all'
     if cmd in ('fetch', 'all'):
         fetch()
+    if cmd == 'wikidata':
+        fetch_wikidata()
     if cmd in ('build', 'all'):
         build()

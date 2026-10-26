@@ -18,6 +18,15 @@ LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the defa
 # facts shown under the field guide's distribution tab rather than the overview
 DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note', 'fact_habitat', 'fact_fossil'}
 VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
+# external links from Wikidata cross-references, in display order; gbif_legacy only when no post-2026 GBIF id
+EXT_LINKS = [
+    ('gbif', 'GBIF', 'https://www.gbif.org/taxon/{}'),
+    ('gbif_legacy', 'GBIF', 'https://www.gbif.org/species/{}'),
+    ('inaturalist', 'iNaturalist', 'https://www.inaturalist.org/taxa/{}'),
+    ('ebird', 'eBird', 'https://ebird.org/species/{}'),
+    ('xenocanto', 'xeno-canto', 'https://xeno-canto.org/species/{}'),
+    ('wikidata', 'Wikidata', 'https://www.wikidata.org/wiki/{}'),
+]
 
 
 def italic(html):
@@ -192,6 +201,14 @@ def create_app():
         ]
         return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
 
+    def ext_links(t, inat_id):
+        x = queries.xrefs(t['taxon_id'])
+        if 'gbif' in x:
+            x.pop('gbif_legacy', None)
+        if inat_id and 'inaturalist' not in x:
+            x['inaturalist'] = [str(inat_id)]  # matched by name for the photos
+        return [{'label': label, 'id': i, 'url': url.format(i)} for src, label, url in EXT_LINKS for i in x.get(src, [])]
+
     @app.route('/taxon/<taxon_id>')
     def taxon(taxon_id):
         t = queries.taxon(taxon_id)
@@ -203,9 +220,10 @@ def create_app():
         lin = queries.lineage(t)
         cite = (f"{t['simple_name']} {t['name_author'] or ''}".strip() +
                 f". TaiCOL 臺灣物種名錄. https://taicol.tw/zh-hant/taxon/{t['taxon_id']} (accessed {date.today().isoformat()})")
+        pics = photos.taxon_photos(t['simple_name'], t['kingdom'])
         return render_template('taxon.html', tx=t, layout=layout, lineage=lin, crumbs=[x for x in lin if x['rank'] in MAJOR_RANKS],
-                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern,
-                               refs=taicol.references(t['name_id']), pics=photos.taxon_photos(t['simple_name'], t['kingdom']),
+                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, pics.get('inat_id')),
+                               refs=taicol.references(t['name_id']), pics=pics,
                                kids=queries.children(t['taxon_id'], 100) if t['n_children'] else [], cite=cite)
 
     def compare_groups(cmp):
