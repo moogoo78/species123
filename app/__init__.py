@@ -207,9 +207,11 @@ def create_app():
         ]
         return [{'key': k, 'label': g.t(k), 'value': v} for k, v in rows if v]
 
-    def ext_links(t, inat_id):
-        x = {src: [(i, 'taicol_id' if src == 'wikidata' else 'wikidata') for i in ids]
-             for src, ids in queries.xrefs(t['taxon_id']).items()}
+    def ext_links(t, xrefs, inat_id):
+        # the Wikidata item itself: found by TaiCOL id or by name; the ids it holds: from Wikidata, or Wikidata via a name match
+        x = {src: [(i, ('taicol_id' if via == 'taicol_id' else 'name') if src == 'wikidata'
+                    else ('wikidata' if via == 'taicol_id' else 'wikidata_name')) for i, via in ids]
+             for src, ids in xrefs.items()}
         if 'gbif' in x:
             x.pop('gbif_legacy', None)
         elif 'gbif_legacy' not in x:
@@ -220,6 +222,18 @@ def create_app():
             x['inaturalist'] = [(str(inat_id), 'name')]  # the photos' name match
         return [{'label': label, 'id': i, 'url': url.format(i), 'via': via}
                 for src, label, url in EXT_LINKS for i, via in x.get(src, [])]
+
+    def description(t, xrefs, lin):
+        """Wikipedia intro; a subspecies / variety / form without an article of its own gets its species' one,
+        with 'species' set so the page can say so."""
+        qid = (xrefs.get('wikidata') or [(None,)])[0][0]
+        desc = wikipedia.summary(qid, g.lang) if qid else None
+        if desc or t['rank'] not in INFRA_RANKS:
+            return desc
+        sp = next((a for a in lin if a['rank'] == 'Species'), None)
+        sp_qid = sp and (queries.xrefs(sp['taxon_id']).get('wikidata') or [(None,)])[0][0]
+        desc = wikipedia.summary(sp_qid, g.lang) if sp_qid else None
+        return desc and {**desc, 'species': sp}
 
     @app.route('/taxon/<taxon_id>')
     def taxon(taxon_id):
@@ -233,11 +247,11 @@ def create_app():
         cite = (f"{t['simple_name']} {t['name_author'] or ''}".strip() +
                 f". TaiCOL 臺灣物種名錄. https://taicol.tw/zh-hant/taxon/{t['taxon_id']} (accessed {date.today().isoformat()})")
         pics = photos.taxon_photos(t['simple_name'], t['kingdom'])
-        qid = (queries.xrefs(t['taxon_id']).get('wikidata') or [None])[0]
+        xrefs = queries.xrefs(t['taxon_id'])
         return render_template('taxon.html', tx=t, layout=layout, lineage=lin, crumbs=[x for x in lin if x['rank'] in MAJOR_RANKS],
-                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, pics.get('inat_id')),
+                               facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, xrefs, pics.get('inat_id')),
                                refs=taicol.references(t['name_id']), pics=pics,
-                               desc=wikipedia.summary(qid, g.lang) if qid else None,
+                               desc=description(t, xrefs, lin),
                                kids=queries.children(t['taxon_id'], 100) if t['n_children'] else [], cite=cite)
 
     def compare_groups(cmp):

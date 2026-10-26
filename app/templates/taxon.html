@@ -22,6 +22,9 @@
 {% if desc %}
 <div class="description">
   {% if heading %}<h3 class="eyebrow">{{ t('description') }}</h3>{% endif %}
+  {% if desc.species %}{% set sp_link %}<a href="{{ url_for('taxon', taxon_id=desc.species.taxon_id) }}"><i>{{ desc.species.simple_name }}</i>{% if desc.species.common_name_c and lang == 'zh' %} {{ desc.species.common_name_c }}{% endif %}</a>{% endset %}
+  {# our own string around an autoescaped link #}
+  <p class="desc-from">{{ t('desc_species', name=sp_link)|safe }}</p>{% endif %}
   <p{% if desc.lang == 'en' %} lang="en"{% endif %}>{{ desc.extract }}</p>
   <p class="muted" style="font-size:12px">{{ t('desc_credit') }}{% if desc.lang != lang %} ({{ t('lang_' + desc.lang) }}){% endif %} · <a href="{{ desc.url }}" rel="noopener" target="_blank">{{ t('read_more') }}</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license" target="_blank">CC BY-SA 4.0</a></p>
 </div>

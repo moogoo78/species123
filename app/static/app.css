@@ -194,7 +194,8 @@ main { flex: 1; }
 .facts-table { width: 100%; font-size: 14px; }
 .facts-table td { white-space: pre-line; }
 .description { display: flex; flex-direction: column; gap: 6px; }
-.description p:not(.muted) { font-size: 15px; line-height: 1.85; color: var(--theme-tx-2); text-wrap: pretty; }
+.description .desc-from { padding: 8px 12px; border-radius: 8px; background: var(--theme-bg-2); color: var(--theme-tx-2); font-size: 13px; }
+.description p:not(.muted, .desc-from) { font-size: 15px; line-height: 1.85; color: var(--theme-tx-2); text-wrap: pretty; }
 .facts-table th { width: 140px; font-weight: 600; color: var(--theme-tx-1); text-align: left; }
 .side-list { display: flex; flex-direction: column; gap: 8px; }
 .side-item { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--theme-bd-1); font-size: 14px; }

@@ -28,6 +28,9 @@ WDQS = 'https://query.wikidata.org/sparql'
 # Wikidata property -> xref source. GBIF re-keyed its taxa in 2026 (P14607); most items still carry only P846.
 WD_PROPS = {'P14607': 'gbif', 'P846': 'gbif_legacy', 'P3151': 'inaturalist', 'P3444': 'ebird', 'P2426': 'xenocanto'}
 UA = 'Species123 importer (+https://species123.naturedb.org)'
+# TaiCOL rank -> Wikidata taxon rank (P105), for items found by scientific name
+WD_RANKS = {'Genus': 'Q34740', 'Species': 'Q7432', 'Subspecies': 'Q68947', 'Variety': 'Q767728', 'Form': 'Q279749'}
+WD_BATCH = 200
 DB = DATA / 'species123.sqlite'
 
 # Ranks counted in taxon_rank_count (node stat tiles) and used for sorting.
@@ -74,7 +77,7 @@ CREATE TABLE taxon (
 );
 CREATE TABLE taxon_rank_count (taxon_id TEXT, rank TEXT, n INTEGER, PRIMARY KEY (taxon_id, rank));
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
-CREATE TABLE xref (taxon_id TEXT, source TEXT, ext_id TEXT, PRIMARY KEY (taxon_id, source, ext_id));
+CREATE TABLE xref (taxon_id TEXT, source TEXT, ext_id TEXT, via TEXT, PRIMARY KEY (taxon_id, source, ext_id));
 """
 
 INDEXES = """
@@ -144,23 +147,93 @@ def fetch():
         fetch_wikidata()
 
 
+def sparql(query, tries=5):
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(WDQS, data=urllib.parse.urlencode({'query': query}).encode(),
+                                         headers={'User-Agent': UA, 'Accept': 'application/sparql-results+json'})
+            with urllib.request.urlopen(req, timeout=300) as resp:
+                return json.load(resp)['results']['bindings']
+        except Exception as e:  # 429 / 5xx / timeouts: back off and retry
+            if i == tries - 1:
+                raise
+            wait = 10 * (i + 1)
+            print(f'  retry in {wait}s ({e})', flush=True)
+            time.sleep(wait)
+
+
+def qid(b, k):
+    return b[k]['value'].rsplit('/', 1)[-1]
+
+
 def fetch_wikidata():
-    """Every Wikidata item with a TaiCOL id (P12218), with its Q id and the WD_PROPS ids, in one query."""
+    """Wikidata cross-references, as [taicol_id, source, ext_id, via] rows.
+
+    via 'taicol_id': items carrying the TaiCOL id (P12218), all in one query.
+    via 'name': for genus-and-below taxa no item claims, the one item with the same scientific name (P225),
+    the same rank (P105), a family ancestor with the TaiCOL family name, and no TaiCOL id of its own.
+    """
     props = ' '.join(f'wdt:{p}' for p in WD_PROPS)
-    query = f"""SELECT ?t ?item ?p ?v WHERE {{
+    rows = set()
+    for b in sparql(f"""SELECT ?t ?item ?p ?v WHERE {{
       ?item wdt:P12218 ?t .
       OPTIONAL {{ VALUES ?p {{ {props} }} ?item ?p ?v }}
-    }}"""
-    req = urllib.request.Request(f'{WDQS}?{urllib.parse.urlencode({"query": query})}',
-                                 headers={'User-Agent': UA, 'Accept': 'application/sparql-results+json'})
-    with urllib.request.urlopen(req, timeout=300) as resp:
-        bindings = json.load(resp)['results']['bindings']
-    rows = set()
-    for b in bindings:
+    }}"""):
         tid = b['t']['value']
-        rows.add((tid, 'wikidata', b['item']['value'].rsplit('/', 1)[-1]))
+        rows.add((tid, 'wikidata', qid(b, 'item'), 'taicol_id'))
         if 'v' in b:
-            rows.add((tid, WD_PROPS[b['p']['value'].rsplit('/', 1)[-1]], b['v']['value']))
+            rows.add((tid, WD_PROPS[qid(b, 'p')], b['v']['value'], 'taicol_id'))
+    covered = {r[0] for r in rows}
+    print(f'wikidata: {len(covered)} TaiCOL ids on Wikidata', flush=True)
+
+    # taxa left: match by name, rank and family
+    want = defaultdict(list)  # name -> [(tid, rank qid, family)]
+    for p in sorted(RAW.glob('taxon-*.json')):
+        for t in json.loads(p.read_text()):
+            fam = next((h['simple_name'] for h in t.get('higher_taxa') or [] if h['rank'] == 'Family'), None)
+            if t.get('taxon_status') == 'accepted' and t['rank'] in WD_RANKS and fam and t['taxon_id'] not in covered:
+                want[t['simple_name'].strip()].append((t['taxon_id'], WD_RANKS[t['rank']], fam))
+    names = sorted(want)
+    found = defaultdict(lambda: {'ranks': set(), 'fams': set(), 'tc': False, 'name': None})
+    for i in range(0, len(names), WD_BATCH):
+        vals = ' '.join(json.dumps(n) for n in names[i:i + WD_BATCH])
+        for b in sparql(f"""SELECT ?name ?item ?rank ?tc ?fam WHERE {{
+          VALUES ?name {{ {vals} }} ?item wdt:P225 ?name .
+          OPTIONAL {{ ?item wdt:P105 ?rank }} OPTIONAL {{ ?item wdt:P12218 ?tc }}
+          OPTIONAL {{ ?item wdt:P171+ ?f . ?f wdt:P105 wd:Q35409 ; wdt:P225 ?fam }}
+        }}"""):
+            it = found[qid(b, 'item')]
+            it['name'] = b['name']['value']
+            it['tc'] |= 'tc' in b
+            if 'rank' in b:
+                it['ranks'].add(qid(b, 'rank'))
+            if 'fam' in b:
+                it['fams'].add(b['fam']['value'])
+        print(f'  names {min(i + WD_BATCH, len(names))}/{len(names)}', flush=True)
+    by_name = defaultdict(list)
+    for q, it in found.items():
+        if not it['tc']:
+            by_name[it['name']].append(q)
+    match = {}
+    for name, taxa in want.items():
+        for tid, rank, fam in taxa:
+            hits = [q for q in by_name[name] if rank in found[q]['ranks'] and fam in found[q]['fams']]
+            if len(hits) == 1:
+                match[tid] = hits[0]
+    claimed = defaultdict(list)
+    for tid, q in match.items():
+        claimed[q].append(tid)
+    match = {tid: q for tid, q in match.items() if len(claimed[q]) == 1}  # one item, one taxon
+    items = {q: tid for tid, q in match.items()}
+    for tid, q in match.items():
+        rows.add((tid, 'wikidata', q, 'name'))
+    qs = sorted(items)
+    for i in range(0, len(qs), WD_BATCH):
+        vals = ' '.join(f'wd:{q}' for q in qs[i:i + WD_BATCH])
+        for b in sparql(f"SELECT ?item ?p ?v WHERE {{ VALUES ?item {{ {vals} }} VALUES ?p {{ {props} }} ?item ?p ?v }}"):
+            rows.add((items[qid(b, 'item')], WD_PROPS[qid(b, 'p')], b['v']['value'], 'name'))
+    print(f'wikidata: {len(match)} more taxa by name', flush=True)
+
     RAW.mkdir(parents=True, exist_ok=True)
     out = {'fetched_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'rows': sorted(rows)}
     (RAW / 'wikidata.json').write_text(json.dumps(out, ensure_ascii=False))
@@ -241,7 +314,8 @@ def build():
     con.executemany(sql, (values(tid, t) for tid, t in rows.items()))
     con.executemany('INSERT INTO taxon_rank_count VALUES (?,?,?)', ((a, r, n) for (a, r), n in rank_count.items()))
     wd = json.loads((RAW / 'wikidata.json').read_text()) if (RAW / 'wikidata.json').exists() else {'rows': []}
-    con.executemany('INSERT INTO xref VALUES (?,?,?)', (r for r in wd['rows'] if r[0] in rows))
+    # rows from before name matching have no via: they all came from the TaiCOL id
+    con.executemany('INSERT INTO xref VALUES (?,?,?,?)', ((*r[:3], r[3] if len(r) > 3 else 'taicol_id') for r in wd['rows'] if r[0] in rows))
     fetched = (RAW / 'fetched_at.txt').read_text().strip() if (RAW / 'fetched_at.txt').exists() else ''
     con.executemany('INSERT INTO meta VALUES (?,?)', [
         ('source', API), ('fetched_at', fetched), ('built_at', datetime.now(timezone.utc).isoformat(timespec='seconds')),

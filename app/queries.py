@@ -42,10 +42,11 @@ def taxon(taxon_id):
 
 
 def xrefs(taxon_id):
-    """{source: [ids]} from Wikidata (see scripts/import_taicol.py WD_PROPS)."""
+    """{source: [(id, via)]} from Wikidata (see scripts/import_taicol.py WD_PROPS); via is how the item was found:
+    'taicol_id' (it carries the TaiCOL id) or 'name' (same scientific name, rank and family)."""
     out = {}
-    for r in rows('SELECT source, ext_id FROM xref WHERE taxon_id = ? ORDER BY source, ext_id', (taxon_id,)):
-        out.setdefault(r['source'], []).append(r['ext_id'])
+    for r in rows('SELECT source, ext_id, via FROM xref WHERE taxon_id = ? ORDER BY source, ext_id', (taxon_id,)):
+        out.setdefault(r['source'], []).append((r['ext_id'], r['via']))
     return out
 
 
