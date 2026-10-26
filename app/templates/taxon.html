@@ -4,15 +4,14 @@
 {% block title %}{{ tx.simple_name }}{% if tx.common_name_c %} {{ tx.common_name_c }}{% endif %} · {{ t('site_name') }}{% endblock %}
 
 {# ---------- shared pieces ---------- #}
-{% macro photo(p, size='medium', cls='') -%}
-<a class="photo {{ cls }}" href="{{ p.page }}" rel="noopener" target="_blank">
-  <img src="{{ p[size] }}" alt="{{ tx.simple_name }}{% if tx.common_name_c %} {{ tx.common_name_c }}{% endif %}" loading="lazy" referrerpolicy="no-referrer">
+{# load: 'lazy' (browser decides), 'eager' (above the fold), 'tab' (src set by app.js when its tab opens) #}
+{% macro photo(p, size='medium', cls='', load='lazy', href=None) -%}
+{% set alt %}{{ tx.simple_name }}{% if tx.common_name_c %} {{ tx.common_name_c }}{% endif %}{% endset %}
+<a class="photo {{ cls }}" href="{{ href or p.page }}"{% if not href %} rel="noopener" target="_blank"{% endif %}{% if href %} data-goto-tab="{{ href[1:] }}"{% endif %}>
+  {% if load == 'tab' %}<img data-src="{{ p[size] }}" alt="{{ alt }}" referrerpolicy="no-referrer"><noscript><img src="{{ p[size] }}" alt="{{ alt }}" referrerpolicy="no-referrer"></noscript>
+  {% else %}<img src="{{ p[size] }}" alt="{{ alt }}" loading="{{ load }}"{% if load == 'eager' %} fetchpriority="high"{% endif %} referrerpolicy="no-referrer">{% endif %}
   <span class="credit">{{ p.attribution }}</span>
 </a>
-{%- endmacro %}
-
-{% macro photo_slot() -%}
-<div class="photo is-empty">{{ icon('image', '20px') }}</div>
 {%- endmacro %}
 
 {% macro photos_credit() -%}
@@ -80,7 +79,7 @@
 {% endmacro %}
 
 {% block main %}
-{% set tabs = [('overview', 'overview'), ('taxonomy', 'classification'), ('distribution', 'distribution'), ('names', 'names'), ('refs', 'literature')] %}
+{% set tabs = [('overview', 'overview')] + ([('photos', 'photos')] if pics.photos else []) + [('taxonomy', 'classification'), ('biology', 'biology'), ('refs', 'literature')] %}
 <section class="profile-head{{ ' is-guide' if layout == 'guide' }}">
   <div class="wrap">
     <div class="profile-top">
@@ -99,10 +98,7 @@
     </div>
 
     {% if layout == 'guide' and pics.photos %}
-    <div class="mosaic">
-      {{ photo(pics.photos[0], 'large', 'is-hero') }}
-      {% for i in range(1, 5) %}{% if pics.photos[i] %}{{ photo(pics.photos[i]) }}{% else %}{{ photo_slot() }}{% endif %}{% endfor %}
-    </div>
+    {{ photo(pics.photos[0], 'large', 'is-preview', load='eager', href='#photos') }}
     {% endif %}
 
     <div class="profile-title">
@@ -138,21 +134,28 @@
     <section id="overview" class="block" data-tab-panel="overview" style="gap:20px">
       {{ fact_tiles(exclude=dist_facts) }}
       {{ children_list() }}
+    </section>
+    {% if pics.photos %}
+    <section id="photos" class="block" data-tab-panel="photos">
+      <h2>{{ t('photos') }}</h2>
+      <div class="photo-grid">{% for p in pics.photos %}{{ photo(p, 'medium', 'is-square', load='tab') }}{% endfor %}</div>
       {{ photos_credit() }}
     </section>
+    {% endif %}
     <section id="taxonomy" class="block" data-tab-panel="taxonomy">
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
+      <div class="side-list">
+        <h3 class="eyebrow">{{ t('common_names') }}</h3>{{ vern_list() }}
+      </div>
       {{ ext_links() }}
     </section>
-    <section id="distribution" class="block" data-tab-panel="distribution">
-      <h2>{{ t('habitat_status') }}</h2>
+    <section id="biology" class="block" data-tab-panel="biology">
+      <h2>{{ t('biology') }}</h2>
+      <h3 class="eyebrow">{{ t('habitat_status') }}</h3>
       <table class="table is-line facts-table"><tbody>
         {% for f in facts if f.key in dist_facts %}<tr><th>{{ f.label }}</th><td>{{ f.value }}</td></tr>{% endfor %}
       </tbody></table>
-    </section>
-    <section id="names" class="side-list" data-tab-panel="names">
-      <h2>{{ t('common_names') }}</h2>{{ vern_list() }}
     </section>
     <section id="refs" class="block" data-tab-panel="refs">
       <h2>{{ t('literature') }}</h2>

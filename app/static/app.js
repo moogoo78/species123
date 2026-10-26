@@ -166,7 +166,12 @@
     var show = function (id) {
       if (ids.indexOf(id) < 0) id = ids[0];
       $$('[data-tab]', tabs).forEach(function (a) { a.setAttribute('aria-selected', String(a.dataset.tab === id)); });
-      $$('[data-tab-panel]', guide).forEach(function (p) { p.classList.toggle('is-active', p.dataset.tabPanel === id); });
+      $$('[data-tab-panel]', guide).forEach(function (p) {
+        var on = p.dataset.tabPanel === id;
+        p.classList.toggle('is-active', on);
+        // tab-deferred photos: fetch the files only once their tab is shown
+        if (on) $$('img[data-src]', p).forEach(function (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); });
+      });
     };
     guide.classList.add('is-tabbed');
     tabs.addEventListener('click', function (e) {
@@ -175,6 +180,15 @@
       e.preventDefault();
       history.replaceState(null, '', '#' + a.dataset.tab);
       show(a.dataset.tab);
+    });
+    // the header photo opens the photos tab
+    $$('[data-goto-tab]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        history.replaceState(null, '', '#' + a.dataset.gotoTab);
+        show(a.dataset.gotoTab);
+        tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
     show(location.hash.slice(1));
   }

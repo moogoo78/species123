@@ -15,7 +15,7 @@ INFRA_RANKS = {'Subspecies', 'Variety', 'Form', 'Subvariety', 'Subform', 'Specia
 TREE_LIMIT = 200
 COMPARE_MAX = 4
 LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the default
-# facts shown under the field guide's distribution tab rather than the overview
+# facts shown under the field guide's biology tab rather than the overview
 DIST_FACTS = {'fact_in_taiwan', 'fact_endemic', 'fact_alien', 'fact_alien_note', 'fact_habitat', 'fact_fossil'}
 VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, copied in the Docker build
 # external links in display order. Ids come from Wikidata (matched on the TaiCOL id) or, for GBIF and

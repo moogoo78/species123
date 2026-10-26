@@ -216,8 +216,9 @@ main { flex: 1; }
 
 /* field guide: photo mosaic + tabs */
 .profile-head.is-guide .wrap { padding-bottom: 0; }
-.mosaic { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 180px 180px; gap: 8px; }
-.mosaic .is-hero { grid-row: 1 / span 2; }
+.photo.is-preview { height: 320px; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.photo img[data-src] { display: none; }
 .photo { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; background: var(--theme-bg-3); color: var(--theme-tx-3); }
 .photo img { width: 100%; height: 100%; max-width: none; object-fit: cover; transition: transform ease-out .2s; }
 .photo .credit { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 10px 6px; font-size: 11px; line-height: 1.4; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); opacity: 0; transition: opacity ease-out .12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -233,9 +234,8 @@ main { flex: 1; }
 .guide .flow h2 { font-size: 22px; font-weight: 700; color: var(--theme-tx-1); }
 .guide.is-tabbed [data-tab-panel]:not(.is-active) { display: none; }
 @media (width < 744px) {
-  .mosaic { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 220px 120px; }
-  .mosaic .is-hero { grid-row: auto; grid-column: 1 / -1; }
-  .mosaic > :nth-child(n + 4) { display: none; }
+  .photo.is-preview { height: 220px; }
+  .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* compare */
