@@ -67,8 +67,26 @@ def children(taxon_id, limit=200):
     return rows(f'SELECT {LIST_COLS}, n_children FROM taxon WHERE parent_id = ? ORDER BY simple_name LIMIT ?', (taxon_id, limit))
 
 
+# ranks a taxon may sit at the top of the tree with ('Unranked' is TaiCOL's Viruses root);
+# any other parentless taxon has no classification in TaiCOL yet
+TOP_RANKS = ('Superkingdom', 'Kingdom', 'Unranked')
+_TOP = ', '.join(f"'{r}'" for r in TOP_RANKS)
+
+
 def roots():
-    return rows(f'SELECT {LIST_COLS}, n_children FROM taxon WHERE parent_id IS NULL AND n_children > 0 ORDER BY simple_name')
+    return rows(f'SELECT {LIST_COLS}, n_children FROM taxon WHERE parent_id IS NULL AND rank IN ({_TOP}) AND n_children > 0 '
+                'ORDER BY simple_name')
+
+
+def unplaced(limit=200):
+    """Parentless taxa below kingdom rank (TaiCOL gives them no parent and no kingdom), for the tree's 未歸類 node."""
+    return rows(f'SELECT {LIST_COLS}, n_children FROM taxon WHERE parent_id IS NULL AND rank NOT IN ({_TOP}) '
+                'ORDER BY simple_name LIMIT ?', (limit,))
+
+
+def unplaced_counts():
+    return one(f"SELECT count(*) AS n, sum(rank = 'Species') AS n_species FROM taxon "
+               f"WHERE parent_id IS NULL AND rank NOT IN ({_TOP})")
 
 
 def rank_counts(taxon_id):

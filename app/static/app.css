@@ -172,6 +172,7 @@ main { flex: 1; }
 .tree-layout { display: grid; grid-template-columns: minmax(300px, 5fr) minmax(0, 7fr); gap: 28px; align-items: start; }
 .tree { border: 1px solid var(--theme-bd-1); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 1px; max-height: calc(100vh - 140px); overflow-y: auto; position: sticky; top: 80px; }
 .tree-row { display: flex; align-items: center; gap: 4px; min-height: 34px; padding-right: 12px; border-radius: 6px; color: var(--theme-tx-2); text-decoration: none; }
+.tree-name.is-virtual { font-style: normal; color: var(--theme-tx-3); }
 .tree-row.is-selected { background: var(--theme-primary-light); color: var(--theme-primary); font-weight: 700; }
 .tree-toggle { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex: none; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
 .tree-toggle .svg { transition: transform .12s; }

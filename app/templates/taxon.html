@@ -39,7 +39,12 @@
 </div>
 {%- endmacro %}
 
+{% macro unplaced_note() -%}
+{% if unplaced %}<p class="muted" style="font-size:13px">{{ t('unplaced_note') }} · <a href="{{ url_for('taxonomy', node='unplaced') }}">{{ t('unplaced') }}</a></p>{% endif %}
+{%- endmacro %}
+
 {% macro lineage_chips() -%}
+{{ unplaced_note() }}
 <div class="lineage-chips">
   {% for a in lineage %}
   <a class="lineage-chip hover-bg" href="{{ url_for('taxonomy', node=a.taxon_id) }}">
@@ -190,6 +195,7 @@
     {% if pics.photos %}{{ photo(pics.photos[0], 'medium', 'is-square') }}{% endif %}
     <div class="panel">
       <h2 class="eyebrow">{{ t('classification') }}</h2>
+      {{ unplaced_note() }}
       {% for a in lineage %}
       <div class="lineage-row">
         <span class="ranklabel">{{ rank_label(a.rank) }}</span>

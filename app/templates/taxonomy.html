@@ -22,11 +22,19 @@
         {% if not loop.last %}<a href="{{ url_for('taxonomy', node=a.taxon_id) }}" class="en">{{ a.simple_name }}</a><span class="sep">/</span>{% else %}<span class="current en">{{ a.simple_name }}</span>{% endif %}
         {% endfor %}
       </nav>
+      {% if node.virtual %}
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <h2>{{ node.simple_name }}</h2>
+        <p class="muted" style="font-size:14px">{{ t('unplaced_lead') }}</p>
+      </div>
+      {% else %}
       <div style="display:flex;flex-direction:column;gap:4px">
         <span class="eyebrow is-primary">{{ rank_label(node.rank) }}</span>
         <h2>{{ (node.formatted_name or node.simple_name)|italic }} <span class="author en" style="font-size:16px;font-weight:400">{{ node.name_author or '' }}</span></h2>
         {% if node.common_name_c %}<p class="strong" style="font-size:18px">{{ node.common_name_c }}</p>{% endif %}
+        {% if lineage and lineage[0].virtual %}<p class="muted" style="font-size:13px">{{ t('unplaced_note') }}</p>{% endif %}
       </div>
+      {% endif %}
       {% if stats %}
       <div class="stats">
         {% for r, n in stats %}
@@ -37,10 +45,10 @@
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
           <h3 class="strong" style="font-size:16px;font-weight:700">{{ t('children') }}</h3>
-          <span style="display:flex;gap:16px;font-size:14px;font-weight:500;white-space:nowrap">
+          {% if not node.virtual %}<span style="display:flex;gap:16px;font-size:14px;font-weight:500;white-space:nowrap">
             <a href="{{ url_for('taxon', taxon_id=node.taxon_id) }}">{{ t('key_facts') }}</a>
             <a href="{{ url_for('search', under=node.taxon_id) }}">{{ t('search_within') }}</a>
-          </span>
+          </span>{% endif %}
         </div>
         <div>
           {% for k in kids %}
@@ -50,7 +58,7 @@
             <span class="badges">{% if k.rank != 'Species' and k.n_species %}<span class="mono muted" style="font-size:12px">{{ t('species_count', n='{:,}'.format(k.n_species)) }}</span>{% else %}{{ badge_list(k, compact=True) }}{% endif %}</span>
           </a>
           {% endfor %}
-          {% if node.n_children > kids|length %}<p class="tree-more">{{ t('more_children', n='{:,}'.format(node.n_children - kids|length)) }} · <a href="{{ url_for('search', under=node.taxon_id) }}">{{ t('search_within') }}</a></p>{% endif %}
+          {% if node.n_children > kids|length %}<p class="tree-more">{{ t('more_children', n='{:,}'.format(node.n_children - kids|length)) }}{% if not node.virtual %} · <a href="{{ url_for('search', under=node.taxon_id) }}">{{ t('search_within') }}</a>{% endif %}</p>{% endif %}
         </div>
       </div>
     </section>

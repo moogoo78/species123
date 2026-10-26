@@ -89,6 +89,11 @@ STRINGS = {
     'taxonomy_lead': ('由總界展開到種與種下分類群。', 'Expand ranks from superkingdom to species.'),
     'collapse_all': ('全部收合', 'Collapse all'),
     'children': ('下層分類群', 'Child taxa'),
+    'unplaced': ('未歸類', 'Unplaced'),
+    'unplaced_lead': ('臺灣物種名錄尚未提供這些分類群的上層分類（沒有上層分類群與界），待名錄補上後，下次匯入會自動歸位。',
+                      'TaiCOL gives these taxa no higher classification yet (no parent and no kingdom); '
+                      'they move into place on the next import once TaiCOL fills it in.'),
+    'unplaced_note': ('臺灣物種名錄尚未提供此分類群的上層分類', 'TaiCOL has no higher classification for this taxon yet'),
     'more_children': ('還有 {n} 筆，請用「範圍內搜尋」', '{n} more — use “Search within”'),
     'search_within': ('範圍內搜尋', 'Search within'),
     'home': ('首頁', 'Home'),

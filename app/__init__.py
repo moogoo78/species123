@@ -13,6 +13,7 @@ from .db import close_db, get_db
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
 INFRA_RANKS = {'Subspecies', 'Variety', 'Form', 'Subvariety', 'Subform', 'Special Form', 'Race', 'Stirps', 'Morph', 'Aberration', 'Hybrid Formula'}
 TREE_LIMIT = 200
+UNPLACED = 'unplaced'  # virtual tree node for parentless taxa below kingdom rank
 TAIPEI = timezone(timedelta(hours=8))  # species of the day turns over at midnight Taiwan time
 COMPARE_MAX = 4
 LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the default
@@ -147,13 +148,22 @@ def create_app():
                                facets=queries.facet_counts(f, under_path), active=active, under=under,
                                kingdom_zh={k['simple_name']: k['common_name_c'] for k in queries.kingdoms()})
 
+    def unplaced_node():
+        """The tree's virtual 未歸類 node: parentless taxa below kingdom rank."""
+        c = queries.unplaced_counts()
+        return {'taxon_id': UNPLACED, 'simple_name': g.t('unplaced'), 'formatted_name': None, 'common_name_c': None,
+                'name_author': None, 'rank': '', 'n_children': c['n'], 'n_species': c['n_species'] or 0, 'virtual': True}
+
+    def kids_of(taxon_id, limit):
+        return queries.unplaced(limit) if taxon_id == UNPLACED else queries.children(taxon_id, limit)
+
     def tree_rows(nodes, depth, open_ids):
         out = []
         for n in nodes:
             is_open = n['taxon_id'] in open_ids
             out.append({'t': n, 'depth': depth, 'open': is_open})
             if is_open:
-                kids = queries.children(n['taxon_id'], TREE_LIMIT)
+                kids = kids_of(n['taxon_id'], TREE_LIMIT)
                 out.extend(tree_rows(kids, depth + 1, open_ids))
                 if n['n_children'] > TREE_LIMIT:
                     out.append({'more': n['n_children'] - TREE_LIMIT, 'depth': depth + 1, 'parent': n})
@@ -166,21 +176,28 @@ def create_app():
 
     @app.route('/taxonomy')
     def taxonomy():
+        unplaced = unplaced_node()
+        if request.args.get('node') == UNPLACED:
+            return render_template('taxonomy.html', rows=tree_rows(queries.roots() + [unplaced], 0, {UNPLACED}),
+                                   node=unplaced, lineage=[unplaced], stats=[], kids=queries.unplaced(TREE_LIMIT))
         node = queries.taxon(request.args.get('node', '')) or None
         if node is None:
             # default: Taiwan's largest kingdom
             ks = queries.kingdoms()
             node = queries.taxon(ks[0]['taxon_id']) if ks else None
         path = node['path'].split(',') if node else []
-        rows = tree_rows(queries.roots(), 0, set(path))
-        return render_template('taxonomy.html', rows=rows, node=node, lineage=queries.lineage(node) if node else [],
+        lin = queries.lineage(node) if node else []
+        if lin and lin[0]['rank'] not in queries.TOP_RANKS:
+            path, lin = [UNPLACED] + path, [unplaced] + lin
+        rows = tree_rows(queries.roots() + [unplaced], 0, set(path))
+        return render_template('taxonomy.html', rows=rows, node=node, lineage=lin,
                                stats=node_stats(node) if node else [], kids=queries.children(node['taxon_id'], 100) if node else [])
 
     @app.route('/taxonomy/children/<taxon_id>')
     def taxonomy_children(taxon_id):
-        parent = queries.taxon(taxon_id) or abort(404)
+        parent = unplaced_node() if taxon_id == UNPLACED else queries.taxon(taxon_id) or abort(404)
         depth = request.args.get('depth', 1, type=int)
-        rows = tree_rows(queries.children(taxon_id, TREE_LIMIT), depth, set())
+        rows = tree_rows(kids_of(taxon_id, TREE_LIMIT), depth, set())
         if parent['n_children'] > TREE_LIMIT:
             rows.append({'more': parent['n_children'] - TREE_LIMIT, 'depth': depth, 'parent': parent})
         return render_template('_tree_rows.html', rows=rows, node=None)
@@ -252,6 +269,7 @@ def create_app():
                                facts=facts(t), dist_facts=DIST_FACTS, vern=vern, links=ext_links(t, xrefs, pics.get('inat_id')),
                                refs=taicol.references(t['name_id']), pics=pics,
                                desc=description(t, xrefs, lin), in_galleries=galleries_of(t),
+                               unplaced=lin[0]['rank'] not in queries.TOP_RANKS,
                                kids=queries.children(t['taxon_id'], 100) if t['n_children'] else [], cite=cite)
 
     def compare_groups(cmp):

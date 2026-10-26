@@ -6,8 +6,10 @@
 {% set n = r.t %}
 <div role="treeitem" class="tree-row hover-bg{{ ' is-selected' if node and node.taxon_id == n.taxon_id }}" style="padding-left:{{ 4 + r.depth * 14 }}px" data-depth="{{ r.depth }}" data-id="{{ n.taxon_id }}" aria-expanded="{{ 'true' if r.open else 'false' }}">
   <button type="button" class="tree-toggle" data-tree-toggle="{{ url_for('taxonomy_children', taxon_id=n.taxon_id, depth=r.depth + 1) }}" aria-label="toggle" aria-expanded="{{ 'true' if r.open else 'false' }}" {{ 'hidden' if not n.n_children }}>{{ icon('chevron-right', '14px') }}</button>
-  <a class="tree-name" href="{{ url_for('taxon', taxon_id=n.taxon_id) if n.rank in ('Species',) or not n.n_children else url_for('taxonomy', node=n.taxon_id) }}"><span class="en">{{ (n.formatted_name or n.simple_name)|italic }}</span>{% if n.common_name_c %}<span class="zh">{{ n.common_name_c }}</span>{% endif %}</a>
-  <span class="ranklabel">{{ rank_label(n.rank) }}</span>
+  {% if n.virtual %}<a class="tree-name is-virtual" href="{{ url_for('taxonomy', node=n.taxon_id) }}">{{ n.simple_name }}</a>
+  <span class="ranklabel">{{ '{:,}'.format(n.n_children) }}</span>
+  {% else %}<a class="tree-name" href="{{ url_for('taxon', taxon_id=n.taxon_id) if n.rank in ('Species',) or not n.n_children else url_for('taxonomy', node=n.taxon_id) }}"><span class="en">{{ (n.formatted_name or n.simple_name)|italic }}</span>{% if n.common_name_c %}<span class="zh">{{ n.common_name_c }}</span>{% endif %}</a>
+  <span class="ranklabel">{{ rank_label(n.rank) }}</span>{% endif %}
   <span class="tree-count">{{ '{:,}'.format(n.n_species) if n.n_species and n.rank != 'Species' else '' }}</span>
 </div>
 {% endif %}
