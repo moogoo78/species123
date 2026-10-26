@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('about') }} · {{ t('site_name') }}{% endblock %}
+{% set n_taxa = '{:,}'.format(data_meta.taxa|int) if data_meta.taxa else '' %}
+{% block main %}
+<article class="wrap page-body about">
+  <header>
+    <h1>{{ t('about_title') }}</h1>
+    {% if lang == 'zh' %}
+    <p class="lead">Species123 是以開放資料組成的臺灣物種圖鑑。網站本身不產生物種資料，而是把幾個公開資料庫串在一起，並在頁面上標明每筆資料的來源。</p>
+    {% else %}
+    <p class="lead">Species123 is a field guide to Taiwan's species built from open data. It produces no species data of its own: it joins several public databases and shows where every piece of information comes from.</p>
+    {% endif %}
+  </header>
+
+  {% if lang == 'zh' %}
+  <section>
+    <h2>名錄骨幹：臺灣物種名錄 TaiCOL</h2>
+    <ul>
+      <li>有效學名、中文名、分類階層、特有性、外來種狀態、保育等級、紅皮書等級，全部來自<a href="https://taicol.tw/" rel="noopener">臺灣物種名錄</a>。</li>
+      <li>透過 <a href="https://api.taicol.tw/" rel="noopener">TaiCOL API</a> 批次匯入{% if n_taxa %} {{ n_taxa }} 筆{% endif %}有效分類群{% if data_meta.fetched_at %}（資料版本 {{ data_meta.fetched_at[:10] }}）{% endif %}，物種頁的參考文獻也由 API 即時查詢。</li>
+      <li>TaiCOL 尚未提供上層分類的分類群（如 <i>Actaea rubra</i>）不自行猜測，統一放在<a href="{{ url_for('taxonomy', node='unplaced') }}">「未歸類」</a>。</li>
+    </ul>
+  </section>
+  <section>
+    <h2>外部連結：Wikidata 串接</h2>
+    <ul>
+      <li>以 <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> 的 TaiCOL ID（<a href="https://www.wikidata.org/wiki/Property:P12218" rel="noopener">P12218</a>）找到對應項目，再取得 <a href="https://www.gbif.org/" rel="noopener">GBIF</a>、<a href="https://www.inaturalist.org/" rel="noopener">iNaturalist</a>、<a href="https://ebird.org/" rel="noopener">eBird</a>、<a href="https://xeno-canto.org/" rel="noopener">xeno-canto</a> 的編號。</li>
+      <li>沒有 TaiCOL ID 的項目，才以學名比對，且須階層、所屬科都相同、只有一個符合。</li>
+      <li>每個連結都標示依據：TaiCOL ID、Wikidata 或學名比對。</li>
+    </ul>
+  </section>
+  <section>
+    <h2>照片：iNaturalist</h2>
+    <ul>
+      <li>只使用 <a href="https://www.inaturalist.org/" rel="noopener">iNaturalist</a> 上採用創用 CC 授權的照片，「保留所有權利」的照片一律不用。</li>
+      <li>每張照片都標示拍攝者與授權。</li>
+    </ul>
+  </section>
+  <section>
+    <h2>物種描述：維基百科</h2>
+    <ul>
+      <li>經由 Wikidata 找到中文（臺灣正體）或英文的<a href="https://zh.wikipedia.org/" rel="noopener">維基百科</a>條目，取用條目摘要，並註明 <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license">CC BY-SA 4.0</a> 與原文連結。</li>
+      <li>亞種若沒有自己的條目，會改用所屬物種的條目，並在頁面上註明。</li>
+    </ul>
+  </section>
+  <section>
+    <h2>原則</h2>
+    <ul>
+      <li><strong>標明來源</strong>：每筆資料都可回溯到原始資料庫。</li>
+      <li><strong>不捏造</strong>：資料缺漏就照實呈現，不用名稱硬配。</li>
+      <li><strong>定期更新</strong>：重新匯入即可跟上 TaiCOL 的最新版本。</li>
+    </ul>
+  </section>
+  {% else %}
+  <section>
+    <h2>The checklist: Taiwan Catalogue of Life (TaiCOL)</h2>
+    <ul>
+      <li>Accepted names, Chinese names, classification, endemism, alien status, protection and Red List status all come from the <a href="https://taicol.tw/" rel="noopener">Taiwan Catalogue of Life</a>.</li>
+      <li>{% if n_taxa %}{{ n_taxa }} accepted{% else %}Accepted{% endif %} taxa are imported in bulk through the <a href="https://api.taicol.tw/" rel="noopener">TaiCOL API</a>{% if data_meta.fetched_at %} (data as of {{ data_meta.fetched_at[:10] }}){% endif %}; the literature on species pages is looked up live from the same API.</li>
+      <li>Taxa TaiCOL gives no higher classification yet (such as <i>Actaea rubra</i>) are not guessed into place: they are listed under <a href="{{ url_for('taxonomy', node='unplaced') }}">Unplaced</a>.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>External links: through Wikidata</h2>
+    <ul>
+      <li>Each taxon's <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> item is found by its TaiCOL ID (<a href="https://www.wikidata.org/wiki/Property:P12218" rel="noopener">P12218</a>), which gives its <a href="https://www.gbif.org/" rel="noopener">GBIF</a>, <a href="https://www.inaturalist.org/" rel="noopener">iNaturalist</a>, <a href="https://ebird.org/" rel="noopener">eBird</a> and <a href="https://xeno-canto.org/" rel="noopener">xeno-canto</a> IDs.</li>
+      <li>Only items without a TaiCOL ID are matched by scientific name, and only when the rank and family also agree and exactly one item fits.</li>
+      <li>Every link says how it was found: TaiCOL ID, Wikidata, or name match.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Photos: iNaturalist</h2>
+    <ul>
+      <li>Only Creative Commons–licensed photos from <a href="https://www.inaturalist.org/" rel="noopener">iNaturalist</a> are used; "all rights reserved" photos never are.</li>
+      <li>Every photo is credited to its photographer, with its licence.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Descriptions: Wikipedia</h2>
+    <ul>
+      <li>The Chinese (Taiwan script) or English <a href="https://en.wikipedia.org/" rel="noopener">Wikipedia</a> article is found through Wikidata; its summary is shown under <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license">CC BY-SA 4.0</a>, with a link to the article.</li>
+      <li>A subspecies without an article of its own shows its species' article, and the page says so.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Principles</h2>
+    <ul>
+      <li><strong>Sources shown</strong>: every piece of data traces back to its source database.</li>
+      <li><strong>Nothing made up</strong>: gaps are shown as gaps, never filled by loose name matching.</li>
+      <li><strong>Kept current</strong>: a re-import picks up TaiCOL's latest version.</li>
+    </ul>
+  </section>
+  {% endif %}
+
+  <footer class="about-links">
+    <a href="https://species123.naturedb.org/">species123.naturedb.org</a> · <a href="https://github.com/moogoo78/species123" rel="noopener">{{ t('about_source_code') }}</a>
+  </footer>
+</article>
+{% endblock %}

@@ -36,8 +36,13 @@
           <a href="{{ url_for('search') }}" class="{{ 'is-active' if ep == 'search' }}">{{ t('nav_search') }}</a>
           <a href="{{ url_for('gallery_index') }}" class="{{ 'is-active' if ep in ('gallery_index', 'gallery') }}">{{ t('nav_gallery') }}</a>
           <a href="{{ url_for('taxonomy') }}" class="{{ 'is-active' if ep == 'taxonomy' }}">{{ t('nav_taxonomy') }}</a>
-          <a href="{{ url_for('names') }}" class="{{ 'is-active' if ep == 'names' }}">{{ t('nav_names') }}</a>
-          <a href="{{ url_for('compare') }}" data-compare-link class="{{ 'is-active' if ep == 'compare' }}">{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></a>
+          <details class="nav-menu" data-nav-menu>
+            <summary class="{{ 'is-active' if ep in ('names', 'compare') }}">{{ t('nav_tools') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span>{{ icon('chevron-right', '14px') }}</summary>
+            <div class="nav-dropdown">
+              <a href="{{ url_for('names') }}" class="{{ 'is-active' if ep == 'names' }}"><span>{{ t('nav_names') }}</span><small>{{ t('nav_names_hint') }}</small></a>
+              <a href="{{ url_for('compare') }}" data-compare-link class="{{ 'is-active' if ep == 'compare' }}"><span>{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></span><small>{{ t('nav_compare_hint') }}</small></a>
+            </div>
+          </details>
         </nav>
         <a class="icon-btn" href="{{ lang_url }}" hreflang="{{ 'en' if lang == 'zh' else 'zh-Hant' }}">{{ t('lang_switch') }}</a>
         <button type="button" class="icon-btn" data-theme-toggle title="{{ t('theme') }}" aria-label="{{ t('theme') }}">
@@ -51,8 +56,10 @@
     <a href="{{ url_for('search') }}">{{ t('nav_search') }}</a>
     <a href="{{ url_for('gallery_index') }}">{{ t('nav_gallery') }}</a>
     <a href="{{ url_for('taxonomy') }}">{{ t('nav_taxonomy') }}</a>
+    <span class="mobile-menu-head">{{ t('nav_tools') }}</span>
     <a href="{{ url_for('names') }}">{{ t('nav_names') }}</a>
-    <a href="{{ url_for('compare') }}" data-compare-link>{{ t('nav_compare') }}</a>
+    <a href="{{ url_for('compare') }}" data-compare-link>{{ t('nav_compare') }} <span class="badge is-plain is-primary is-round is-xs" data-compare-count hidden>0</span></a>
+    <a href="{{ url_for('about') }}">{{ t('about') }}</a>
   </div>
 
   <main>{% block main %}{% endblock %}</main>
@@ -60,7 +67,7 @@
   <footer class="site-footer">
     <div class="wrap">
       <span>{{ t('site_name') }} · <a href="https://taicol.tw/" rel="noopener">{{ t('footer_source') }}</a>{% if data_meta.fetched_at %} · {{ t('footer_version', d=data_meta.fetched_at[:10]) }}{% endif %}</span>
-      <span><a href="https://api.taicol.tw/" rel="noopener">TaiCOL API</a></span>
+      <span><a href="{{ url_for('about') }}">{{ t('about') }}</a> · <a href="https://api.taicol.tw/" rel="noopener">TaiCOL API</a> · <a href="https://github.com/moogoo78/species123" rel="noopener">GitHub</a></span>
     </div>
   </footer>
 </div>

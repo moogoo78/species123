@@ -116,6 +116,10 @@ def create_app():
     def vendor(filename):
         return send_from_directory(VENDOR, filename, max_age=7 * 24 * 3600)
 
+    @app.route('/about')
+    def about():
+        return render_template('about.html')
+
     @app.route('/healthz')
     def healthz():
         return {'ok': True, 'data': get_db() is not None}

@@ -53,3 +53,4 @@ docker compose -f compose.yml -f compose.traefik.yml up -d --build
 | `/taxon/<taxon_id>?layout=sheet\|article` | 物種／分類群頁（預設圖鑑版面；分頁 `#overview` `#photos` `#taxonomy` `#biology` `#refs`） |
 | `/names`（POST `text`，`format=csv` 下載） | 學名擷取：貼上文字，找出學名並比對 TaiCOL 有效名，依科整理成名錄 |
 | `/compare?ids=a,b,c,d` | 最多 4 個分類群並列比較 |
+| `/about` | 關於：網站如何使用開放資料（TaiCOL、Wikidata、iNaturalist、維基百科） |

@@ -41,6 +41,13 @@
     });
   });
 
+  // 工具 dropdown: close on an outside click or Escape
+  var navMenu = $('[data-nav-menu]');
+  if (navMenu) {
+    document.addEventListener('click', function (e) { if (!navMenu.contains(e.target)) navMenu.open = false; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') navMenu.open = false; });
+  }
+
   // compare tray (ids in localStorage, mirrored into nav links)
   function tray() { return store.get('species123.compare', store.get('taien.compare', [])).slice(0, MAX); }
   function setTray(ids) {
