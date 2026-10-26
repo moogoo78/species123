@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_icons.html' import icon %}
-{% from '_macros.html' import sci with context %}
+{% from '_macros.html' import sci, badge_list with context %}
 {% block main %}
 <section class="hero">
   <div class="inner">
@@ -17,6 +17,26 @@
     </div>
   </div>
 </section>
+
+{% if daily %}
+{% set p = daily_pics.photos[0] if daily_pics and daily_pics.photos else None %}
+<section class="wrap home-section">
+  <div class="section-head">
+    <h2>{{ t('daily') }}</h2>
+    <span class="mono muted" style="font-size:13px">{{ today.isoformat() }}</span>
+  </div>
+  <a class="daily-card hover-bg{% if not p %} is-text{% endif %}" href="{{ url_for('taxon', taxon_id=daily.taxon_id) }}">
+    {% if p %}<span class="photo"><img src="{{ p.medium }}" alt="{{ daily.simple_name }} {{ daily.common_name_c }}" loading="lazy" referrerpolicy="no-referrer"><span class="credit">{{ p.attribution }}</span></span>{% endif %}
+    <span class="body">
+      <span class="name">{{ daily.common_name_c }}</span>
+      <span class="sci">{{ sci(daily) }}</span>
+      {% if daily.family %}<span class="muted">{{ daily.family_c or '' }} <span class="en">{{ daily.family }}</span></span>{% endif %}
+      <span class="badges">{{ badge_list(daily) }}</span>
+      <span class="more">{{ t('daily_more') }} {{ icon('arrow-right') }}</span>
+    </span>
+  </a>
+</section>
+{% endif %}
 
 <section class="wrap home-section">
   <div class="section-head">

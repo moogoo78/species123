@@ -1,4 +1,6 @@
 """SQL against the read-only TaiCOL snapshot."""
+import hashlib
+
 from . import groups
 from .db import get_db
 
@@ -78,6 +80,21 @@ def kingdoms():
 
 def recent(limit=8):
     return rows(f"SELECT {LIST_COLS} FROM taxon WHERE rank = 'Species' ORDER BY updated_at DESC, simple_name LIMIT ?", (limit,))
+
+
+# living, non-sensitive species in Taiwan with a Chinese name and an iNaturalist id (so most have a photo)
+DAILY_POOL = ("rank = 'Species' AND is_in_taiwan = 1 AND common_name_c IS NOT NULL AND sensitive IS NULL "
+              "AND coalesce(is_fossil, 0) = 0 AND coalesce(alien_type, 'native') IN ('native', 'naturalized', 'invasive') "
+              "AND taxon_id IN (SELECT taxon_id FROM xref WHERE source = 'inaturalist')")
+
+
+def species_of_the_day(day):
+    """Same species all day for everyone: the pool row at sha256(date) mod pool size."""
+    n = one(f'SELECT count(*) FROM taxon WHERE {DAILY_POOL}')[0]
+    if not n:
+        return None
+    offset = int(hashlib.sha256(day.isoformat().encode()).hexdigest(), 16) % n
+    return one(f'SELECT {LIST_COLS}, is_in_taiwan FROM taxon WHERE {DAILY_POOL} ORDER BY taxon_id LIMIT 1 OFFSET ?', (offset,))
 
 
 def siblings(t, exclude, limit=6):

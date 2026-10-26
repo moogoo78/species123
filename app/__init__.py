@@ -1,7 +1,7 @@
 import csv
 import io
 import os
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 from flask import Flask, Response, abort, g, render_template, request, send_from_directory
@@ -13,6 +13,7 @@ from .db import close_db, get_db
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
 INFRA_RANKS = {'Subspecies', 'Variety', 'Form', 'Subvariety', 'Subform', 'Special Form', 'Race', 'Stirps', 'Morph', 'Aberration', 'Hybrid Formula'}
 TREE_LIMIT = 200
+TAIPEI = timezone(timedelta(hours=8))  # species of the day turns over at midnight Taiwan time
 COMPARE_MAX = 4
 LAYOUTS = ('guide', 'sheet', 'article')  # species page; field guide is the default
 # facts shown under the field guide's biology tab rather than the overview
@@ -120,7 +121,11 @@ def create_app():
 
     @app.route('/')
     def home():
+        today = datetime.now(TAIPEI).date()
+        daily = queries.species_of_the_day(today)
+        daily_pics = photos.taxon_photos(daily['simple_name'], daily['kingdom']) if daily else None
         return render_template('home.html', kingdoms=queries.kingdoms(), recent=queries.recent(), groups=queries.group_cards(),
+                               daily=daily, daily_pics=daily_pics, today=today,
                                suggestions=['Begonia formosana', '水鴨腳', 'Ursus thibetanus', '蘭科', 'Lepidoptera'])
 
     def search_filters():

@@ -37,6 +37,8 @@ STRINGS = {
     'browse_kingdom': ('依界瀏覽', 'Browse by kingdom'),
     'taxonomy_tree': ('分類樹', 'Taxonomy tree'),
     'species_count': ('{n} 種', '{n} species'),
+    'daily': ('今日物種', 'Species of the day'),
+    'daily_more': ('查看物種', 'View species'),
     'recent': ('最近更新', 'Recently revised'),
     'all_records': ('所有紀錄', 'All records'),
     'filters': ('篩選', 'Filters'),
