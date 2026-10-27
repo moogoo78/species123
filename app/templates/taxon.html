@@ -7,7 +7,8 @@
 {# load: 'lazy' (browser decides), 'eager' (above the fold), 'tab' (src set by app.js when its tab opens) #}
 {% macro photo(p, size='medium', cls='', load='lazy', href=None) -%}
 {% set alt %}{{ tx.simple_name }}{% if tx.common_name_c %} {{ tx.common_name_c }}{% endif %}{% endset %}
-<a class="photo {{ cls }}" href="{{ href or p.page }}"{% if not href %} rel="noopener" target="_blank"{% endif %}{% if href %} data-goto-tab="{{ href[1:] }}"{% endif %}>
+{% set fit = 'is-preview' in cls or 'is-wide' in cls %}{# main image: the whole photo on a blurred copy of itself, not cropped #}
+<a class="photo {{ cls }}{{ ' is-fit' if fit }}" href="{{ href or p.page }}"{% if fit %} style="--photo: url('{{ p[size] }}')"{% endif %}{% if not href %} rel="noopener" target="_blank"{% endif %}{% if href %} data-goto-tab="{{ href[1:] }}"{% endif %}>
   {% if load == 'tab' %}<img data-src="{{ p[size] }}" alt="{{ alt }}" referrerpolicy="no-referrer"><noscript><img src="{{ p[size] }}" alt="{{ alt }}" referrerpolicy="no-referrer"></noscript>
   {% else %}<img src="{{ p[size] }}" alt="{{ alt }}" loading="{{ load }}"{% if load == 'eager' %} fetchpriority="high"{% endif %} referrerpolicy="no-referrer">{% endif %}
   <span class="credit">{{ p.attribution }}</span>
