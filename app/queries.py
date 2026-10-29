@@ -161,8 +161,11 @@ def _group_cond(keys):
     return _under_cond([r for k in keys if k in groups.BY_KEY for r in groups.BY_KEY[k][2]])
 
 
-# gallery filters; the first is the default. Living species only, except under 'all'
-_LIVING_TW = 'is_in_taiwan = 1 AND NOT coalesce(is_fossil, 0)'
+# gallery filters; the first is the default. Living species only, except under 'all'.
+# TaiCOL flags some living species as fossils (they also have a fossil record); those are kept.
+LIVING_DESPITE_FOSSIL_FLAG = ('t0061401',)  # Dermochelys coriacea 革龜
+_LIVING_TW = (f"is_in_taiwan = 1 AND (NOT coalesce(is_fossil, 0) "
+              f"OR taxon_id IN ({','.join(repr(i) for i in LIVING_DESPITE_FOSSIL_FLAG)}))")
 GALLERY_SHOW = {
     'taiwan': _LIVING_TW,
     'endemic': f'{_LIVING_TW} AND is_endemic = 1',
