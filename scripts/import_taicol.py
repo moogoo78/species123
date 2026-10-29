@@ -2,15 +2,18 @@
 
     python scripts/import_taicol.py fetch     # page api.taicol.tw/v2/taxon into data/raw/ (resumable)
     python scripts/import_taicol.py wikidata  # refresh data/raw/wikidata.json (GBIF / iNaturalist / eBird / xeno-canto ids)
-    python scripts/import_taicol.py build     # build data/species123.sqlite from data/raw/ (+ data/raw/wcvp.json, see import_wcvp.py)
+    python scripts/import_taicol.py build     # build data/species123.sqlite from data/raw/ (+ data/raw/wcvp.json, see import_wcvp.py,
+                                              #   and data/nc/nc_plant_checklist.csv, the Nature Campus plant index)
     python scripts/import_taicol.py           # fetch + build
 
 The API caps pages at 300 rows, so a full fetch is ~460 requests. Pages already
 on disk are skipped; delete data/raw/ to force a fresh download. fetch also gets
 the Wikidata cross-references when data/raw/wikidata.json is missing.
 """
+import csv
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -32,6 +35,9 @@ UA = 'Species123 importer (+https://species123.naturedb.org)'
 WD_RANKS = {'Genus': 'Q34740', 'Species': 'Q7432', 'Subspecies': 'Q68947', 'Variety': 'Q767728', 'Form': 'Q279749'}
 WD_BATCH = 200
 DB = DATA / 'species123.sqlite'
+# 自然攝影中心 (Nature Campus) plant index: one photo post per name, now served by the read-only archive
+NC_CHECKLIST = DATA / 'nc' / 'nc_plant_checklist.csv'
+NC_BBS = re.compile(r'^https?://nc\.(?:naturedb\.org|biodiv\.tw)/bbs/')
 
 # Ranks counted in taxon_rank_count (node stat tiles) and used for sorting.
 MAJOR_RANKS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -248,6 +254,33 @@ def flag(v):
     return None if v is None else int(bool(v))
 
 
+def nc_xrefs(rows):
+    """(taxon_id, 'nc', bbs path, via) for the Nature Campus plant index: the name is a TaiCOL plant's accepted
+    name ('name'), or else one of its synonyms ('synonym'). TaiCOL has some duplicate accepted names; all get the link."""
+    if not NC_CHECKLIST.exists():
+        return []
+    accepted, synonym = defaultdict(list), defaultdict(list)
+    for tid, t in rows.items():
+        if t['kingdom'] == 'Plantae':
+            accepted[t['simple_name']].append(tid)
+            for s in (t.get('synonyms') or '').split(','):
+                if s.strip():
+                    synonym[s.strip()].append(tid)
+    out = set()
+    with open(NC_CHECKLIST, encoding='utf-8-sig') as f:
+        for r in csv.DictReader(f):
+            path = NC_BBS.sub('', r['url'])
+            if path == r['url']:
+                continue
+            name = r['species']
+            for tid in accepted[name]:
+                out.add((tid, 'nc', path, 'name'))
+            for tid in [] if accepted[name] else synonym[name]:
+                out.add((tid, 'nc', path, 'synonym'))
+    print(f'nature campus: {len(out)} links for {len({x[0] for x in out})} taxa', flush=True)
+    return sorted(out)
+
+
 def build():
     pages = sorted(RAW.glob('taxon-*.json'))
     if not pages:
@@ -320,6 +353,7 @@ def build():
     wd = json.loads((RAW / 'wikidata.json').read_text()) if (RAW / 'wikidata.json').exists() else {'rows': []}
     # rows from before name matching have no via: they all came from the TaiCOL id
     con.executemany('INSERT INTO xref VALUES (?,?,?,?)', ((*r[:3], r[3] if len(r) > 3 else 'taicol_id') for r in wd['rows'] if r[0] in rows))
+    con.executemany('INSERT OR IGNORE INTO xref VALUES (?,?,?,?)', nc_xrefs(rows))
     wcvp = json.loads((RAW / 'wcvp.json').read_text()) if (RAW / 'wcvp.json').exists() else {'rows': []}
     wcvp_rows = [w for w in wcvp['rows'] if w['taxon_id'] in rows]
     con.executemany('INSERT INTO wcvp VALUES (?,?,?,?,?,?,?,?,?,?)', (

@@ -24,7 +24,9 @@ VENDOR = os.environ.get('SPECIES123_VENDOR', '/code/vendor')  # musubii.css, cop
 GA_ID = os.environ.get('SPECIES123_GA_ID', '').strip()  # Google Analytics 4 measurement id (G-XXXXXXX); unset = no tracking
 # external links in display order. Ids come from Wikidata (matched on the TaiCOL id) or, for GBIF and
 # iNaturalist only, from an exact accepted-name match; gbif_legacy only when there is no post-2026 GBIF id.
-# TBIA (Taiwan Biodiversity Information Alliance) occurrence search takes the TaiCOL id itself.
+# TBIA (Taiwan Biodiversity Information Alliance) occurrence search takes the TaiCOL id itself; 自然攝影中心
+# (Nature Campus) photo posts come from its plant index, matched by name (scripts/import_taicol.py nc_xrefs).
+# A label that is an i18n key is translated.
 EXT_LINKS = [
     ('tbia', 'TBIA', 'https://tbiadata.tw/{site_lang}/search/occurrence?record_type=occ&taxonID={}&page=1&from=search&limit=10'),
     ('gbif', 'GBIF', 'https://www.gbif.org/taxon/{}'),
@@ -35,6 +37,7 @@ EXT_LINKS = [
     ('wikidata', 'Wikidata', 'https://www.wikidata.org/wiki/{}'),
     ('powo', 'POWO', 'https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:{}'),
     ('ipni', 'IPNI', 'https://www.ipni.org/n/{}'),
+    ('nc', 'nc_label', 'https://nc-archive.naturedb.org/bbs/{}'),
 ]
 
 
@@ -252,7 +255,7 @@ def create_app():
     def ext_links(t, xrefs, inat_id, w):
         # the Wikidata item itself: found by TaiCOL id or by name; the ids it holds: from Wikidata, or Wikidata via a name match
         x = {src: [(i, ('taicol_id' if via == 'taicol_id' else 'name') if src == 'wikidata'
-                    else ('wikidata' if via == 'taicol_id' else 'wikidata_name')) for i, via in ids]
+                    else via if src == 'nc' else ('wikidata' if via == 'taicol_id' else 'wikidata_name')) for i, via in ids]
              for src, ids in xrefs.items()}
         if 'gbif' in x:
             x.pop('gbif_legacy', None)
@@ -267,7 +270,7 @@ def create_app():
             if w and w[src + '_id']:
                 x[src] = [(w[src + '_id'], 'wcvp')]
         site_lang = 'zh-hant' if g.lang == 'zh' else 'en-us'
-        return [{'label': label, 'id': i, 'url': url.format(i, site_lang=site_lang), 'via': via}
+        return [{'label': g.t(label), 'id': i, 'url': url.format(i, site_lang=site_lang), 'via': via}
                 for src, label, url in EXT_LINKS for i, via in x.get(src, [])]
 
     def description(t, xrefs, lin):

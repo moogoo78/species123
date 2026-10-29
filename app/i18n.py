@@ -133,10 +133,13 @@ STRINGS = {
     'via_name': ('學名比對', 'Name match'),
     'via_wikidata_name': ('Wikidata（學名比對）', 'Wikidata (name match)'),
     'via_wcvp': ('WCVP', 'WCVP'),
+    'via_synonym': ('異名比對', 'Synonym match'),
+    'nc_label': ('自然攝影中心', 'Nature Campus'),
     'via_note': ('連結依據：TaiCOL ID（TBIA）、Wikidata（以 TaiCOL ID 對應）、學名比對（與 TaiCOL 有效名完全相同；Wikidata 項目另須階層與科相同），'
-                 '或 WCVP（POWO、IPNI，維管束植物）',
+                 'WCVP（POWO、IPNI，維管束植物），或異名比對（自然攝影中心植物索引的學名是 TaiCOL 異名）',
                  'Linked via the TaiCOL ID (TBIA), Wikidata (matched on the TaiCOL ID), a name match (identical to the TaiCOL accepted name; '
-                 'for Wikidata items, also the same rank and family), or WCVP (POWO and IPNI, vascular plants)'),
+                 'for Wikidata items, also the same rank and family), WCVP (POWO and IPNI, vascular plants), '
+                 'or a synonym match (the Nature Campus plant index uses a TaiCOL synonym)'),
     'key_facts': ('重點資訊', 'Key facts'),
     'description': ('描述', 'Description'),
     'desc_credit': ('內容取自維基百科', 'From Wikipedia'),
