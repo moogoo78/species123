@@ -220,6 +220,7 @@
   <div class="flow">
     <section id="overview" class="block" data-tab-panel="overview" style="gap:20px">
       {{ fact_tiles(exclude=dist_facts) }}
+      {{ ext_links() }}
       {{ children_list() }}
     </section>
     {% if pics.photos %}
@@ -233,7 +234,6 @@
       <h2>{{ t('classification') }}</h2>
       {{ lineage_chips() }}
       {{ common_names() }}
-      {{ ext_links() }}
     </section>
     <section id="biology" class="block" data-tab-panel="biology">
       <h2>{{ t('biology') }}</h2>
