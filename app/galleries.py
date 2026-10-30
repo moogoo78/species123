@@ -11,6 +11,8 @@ GALLERIES = [
     ('odonata', '臺灣蜻蜓豆娘圖鑑', 'Dragonflies and damselflies of Taiwan', ['t0002023']),  # Odonata
     ('mammals', '臺灣哺乳類圖鑑', 'Mammals of Taiwan', ['t0000517']),  # Mammalia
     ('birds', '臺灣鳥類圖鑑', 'Birds of Taiwan', ['t0000650']),  # Aves
+    # not one clade in TaiCOL: Actinopterygii, Chondrichthyes, Sarcopterygii, Myxini, Petromyzonti (as groups.py 魚類)
+    ('fishes', '臺灣魚類圖鑑', 'Fishes of Taiwan', ['t0000203', 't0000204', 't0000205', 't0000522', 't0122974']),
 ]
 BY_KEY = {k: (zh, en, roots) for k, zh, en, roots in GALLERIES}
 

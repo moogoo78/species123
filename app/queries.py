@@ -162,10 +162,12 @@ def _group_cond(keys):
 
 
 # gallery filters; the first is the default. Living species only, except under 'all'.
-# TaiCOL flags some living species as fossils (they also have a fossil record); those are kept.
-LIVING_DESPITE_FOSSIL_FLAG = ('t0061401', 't0064355')  # Dermochelys coriacea 革龜, Gavia stellata 紅喉潛鳥
-_LIVING_TW = (f"is_in_taiwan = 1 AND (NOT coalesce(is_fossil, 0) "
-              f"OR taxon_id IN ({','.join(repr(i) for i in LIVING_DESPITE_FOSSIL_FLAG)}))")
+# TaiCOL's fossil flag also marks living species with a fossil record in Taiwan (the great white, 革龜, 大黃魚):
+# a flagged species with an iNaturalist taxon is living and kept, unless Taiwan only has it as a fossil.
+FOSSIL_ONLY_IN_TAIWAN = ('t0097046', 't0123937', 't0125186')  # Panthera pardus 花豹, Microtus fortis 東方田鼠, Elaphurus davidianus 麋鹿
+_LIVING_TW = ("is_in_taiwan = 1 AND (NOT coalesce(is_fossil, 0) OR (EXISTS (SELECT 1 FROM xref x "
+              "WHERE x.taxon_id = taxon.taxon_id AND x.source = 'inaturalist') "
+              f"AND taxon_id NOT IN ({','.join(repr(i) for i in FOSSIL_ONLY_IN_TAIWAN)})))")
 GALLERY_SHOW = {
     'taiwan': _LIVING_TW,
     'endemic': f'{_LIVING_TW} AND is_endemic = 1',
