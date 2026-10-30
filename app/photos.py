@@ -3,6 +3,7 @@ import json
 import time
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 from flask import current_app
 
@@ -12,6 +13,7 @@ API = 'https://api.inaturalist.org/v1'
 TTL = 30 * 24 * 3600
 MAX_PHOTOS = 5
 THUMB_BATCH = 30  # iNaturalist ids per /taxa/{ids} request
+THUMB_PARALLEL = 4  # /taxa/{ids} requests in flight at once, so a cold large gallery (birds: 27 batches) stays bearable
 NAME_LOOKUPS = 10  # gallery species looked up by name per page view (no iNat id, or no usable photo)
 # TaiCOL kingdom -> iNaturalist kingdom taxon id; a hit must sit under the same kingdom
 # (homonyms like Actaea the crab genus vs Actaea the plant genus)
@@ -88,21 +90,28 @@ def thumbs(inat_ids):
                 f'SELECT inat_id, body, fetched_at FROM thumb_cache WHERE inat_id IN ({",".join("?" * len(chunk))})', chunk):
             (out if time.time() - fetched < TTL else stale)[inat_id] = json.loads(body)
     todo = [i for i in ids if i not in out]
-    for i in range(0, len(todo), THUMB_BATCH):
-        batch = todo[i:i + THUMB_BATCH]
+    batches = [todo[i:i + THUMB_BATCH] for i in range(0, len(todo), THUMB_BATCH)]
+
+    def fetch(batch):
         try:
-            found = {str(r['id']): r for r in _get(f'{API}/taxa/' + ','.join(batch)).get('results') or []}
+            return {str(r['id']): r for r in _get(f'{API}/taxa/' + ','.join(batch)).get('results') or []}
         except Exception as e:
-            current_app.logger.warning('iNaturalist thumbs: %s', e)
-            out.update({b: stale.get(b) for b in batch})
-            continue
-        now = time.time()
-        for b in batch:
-            r = found.get(b) or {}
-            # the default photo, else the first openly licensed one of the taxon's photos
-            ok = [p for p in [r.get('default_photo') or {}] + [tp.get('photo') or {} for tp in r.get('taxon_photos') or []]
-                  if p.get('license_code') and p.get('square_url') and p.get('medium_url')]
-            out[b] = _photo(ok[0]) if ok else None
-            cache.execute('INSERT OR REPLACE INTO thumb_cache VALUES (?, ?, ?)', (b, json.dumps(out[b]), now))
-        cache.commit()
+            return e
+
+    # only the requests run in threads; the cache connection stays on this one
+    with ThreadPoolExecutor(THUMB_PARALLEL) as pool:
+        for batch, found in zip(batches, pool.map(fetch, batches)):
+            if isinstance(found, Exception):
+                current_app.logger.warning('iNaturalist thumbs: %s', found)
+                out.update({b: stale.get(b) for b in batch})
+                continue
+            now = time.time()
+            for b in batch:
+                r = found.get(b) or {}
+                # the default photo, else the first openly licensed one of the taxon's photos
+                ok = [p for p in [r.get('default_photo') or {}] + [tp.get('photo') or {} for tp in r.get('taxon_photos') or []]
+                      if p.get('license_code') and p.get('square_url') and p.get('medium_url')]
+                out[b] = _photo(ok[0]) if ok else None
+                cache.execute('INSERT OR REPLACE INTO thumb_cache VALUES (?, ?, ?)', (b, json.dumps(out[b]), now))
+            cache.commit()
     return out

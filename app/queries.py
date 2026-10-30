@@ -163,7 +163,7 @@ def _group_cond(keys):
 
 # gallery filters; the first is the default. Living species only, except under 'all'.
 # TaiCOL flags some living species as fossils (they also have a fossil record); those are kept.
-LIVING_DESPITE_FOSSIL_FLAG = ('t0061401',)  # Dermochelys coriacea 革龜
+LIVING_DESPITE_FOSSIL_FLAG = ('t0061401', 't0064355')  # Dermochelys coriacea 革龜, Gavia stellata 紅喉潛鳥
 _LIVING_TW = (f"is_in_taiwan = 1 AND (NOT coalesce(is_fossil, 0) "
               f"OR taxon_id IN ({','.join(repr(i) for i in LIVING_DESPITE_FOSSIL_FLAG)}))")
 GALLERY_SHOW = {

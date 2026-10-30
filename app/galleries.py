@@ -10,6 +10,7 @@ GALLERIES = [
     ('sea-turtles', '臺灣海龜圖鑑', 'Sea turtles of Taiwan', ['t0124505']),  # Chelonioidea
     ('odonata', '臺灣蜻蜓豆娘圖鑑', 'Dragonflies and damselflies of Taiwan', ['t0002023']),  # Odonata
     ('mammals', '臺灣哺乳類圖鑑', 'Mammals of Taiwan', ['t0000517']),  # Mammalia
+    ('birds', '臺灣鳥類圖鑑', 'Birds of Taiwan', ['t0000650']),  # Aves
 ]
 BY_KEY = {k: (zh, en, roots) for k, zh, en, roots in GALLERIES}
 
